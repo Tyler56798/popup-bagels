@@ -1,0 +1,273 @@
+/* ===================================================================
+   Popup Bagels Lead Manager — styles
+   Clean, mobile-first. Status stages are color-coded for scanning.
+   =================================================================== */
+
+:root {
+  /* Brand */
+  --bg: #f4f1ea;
+  --surface: #ffffff;
+  --ink: #23201b;
+  --ink-soft: #6b6358;
+  --line: #e3ddd1;
+  --accent: #c4641f;        /* toasted-sesame orange */
+  --accent-dark: #9c4d14;
+
+  /* Status colors — one hue per pipeline stage */
+  --st-not: #6b7280;        /* Not Contacted — gray  */
+  --st-reached: #2563eb;    /* Reached Out   — blue  */
+  --st-followed: #d97706;   /* Followed Up   — amber */
+  --st-booked: #16a34a;     /* Booked        — green */
+  --st-declined: #dc2626;   /* Declined      — red   */
+
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ---- Header / footer ---- */
+.site-header {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  padding: 28px 0;
+}
+.site-header h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  letter-spacing: -0.01em;
+}
+.site-header h1 span { font-weight: 400; opacity: 0.9; }
+.tagline { margin: 6px 0 0; opacity: 0.92; }
+
+.site-footer {
+  margin-top: 40px;
+  padding: 18px 0 28px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--line);
+}
+
+/* ---- Sections ---- */
+main section { margin-top: 28px; }
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hint {
+  font-weight: 400;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+p.hint { margin: 4px 0 0; }
+
+/* ---- Pipeline summary cards ---- */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--ink-soft);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.summary-card .count { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+.summary-card .label { font-size: 0.82rem; color: var(--ink-soft); margin-top: 4px; }
+.summary-card.total { border-left-color: var(--accent); }
+.summary-card.st-not      { border-left-color: var(--st-not); }
+.summary-card.st-reached  { border-left-color: var(--st-reached); }
+.summary-card.st-followed { border-left-color: var(--st-followed); }
+.summary-card.st-booked   { border-left-color: var(--st-booked); }
+.summary-card.st-declined { border-left-color: var(--st-declined); }
+
+/* ---- Follow-up queue ---- */
+.followup-list { display: flex; flex-direction: column; gap: 10px; }
+.followup-item {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 5px solid var(--st-followed);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.followup-item .stale { color: var(--st-declined); font-weight: 600; font-size: 0.85rem; }
+.followup-item .meta { color: var(--ink-soft); font-size: 0.85rem; }
+
+/* ---- Forms ---- */
+form {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+.field { margin-bottom: 14px; }
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin-bottom: 5px;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+textarea { resize: vertical; }
+
+/* Inline validation error (never an alert box) */
+.error {
+  color: var(--st-declined);
+  font-size: 0.82rem;
+  margin: 5px 0 0;
+  min-height: 1em;
+}
+input.invalid { border-color: var(--st-declined); }
+
+.form-actions { display: flex; gap: 10px; }
+
+/* ---- Buttons ---- */
+.btn {
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 600;
+}
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-dark); }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+.btn.ghost:hover { background: var(--bg); }
+.btn.danger { background: #fff; border-color: var(--st-declined); color: var(--st-declined); }
+.btn.danger:hover { background: var(--st-declined); color: #fff; }
+.btn.small { padding: 5px 10px; font-size: 0.82rem; }
+
+/* ---- Lead list ---- */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.list-controls { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 0.88rem; }
+.list-controls select { width: auto; }
+
+.lead-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+.lead-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lead-card .card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.lead-card h3 { margin: 0; font-size: 1.05rem; }
+.lead-card .addr { color: var(--ink-soft); font-size: 0.88rem; margin: 2px 0 0; }
+.lead-card dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  font-size: 0.86rem;
+}
+.lead-card dt { color: var(--ink-soft); }
+.lead-card dd { margin: 0; }
+
+.card-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.card-status-row select { width: auto; flex: 1; min-width: 140px; }
+.card-actions { display: flex; gap: 8px; }
+
+/* ---- Status badge — color per stage ---- */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+.badge.st-not      { background: var(--st-not); }
+.badge.st-reached  { background: var(--st-reached); }
+.badge.st-followed { background: var(--st-followed); }
+.badge.st-booked   { background: var(--st-booked); }
+.badge.st-declined { background: var(--st-declined); }
+
+/* ---- Empty states ---- */
+.empty {
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 560px) {
+  .row { grid-template-columns: 1fr; }
+  .list-header { align-items: stretch; }
+  .lead-list { grid-template-columns: 1fr; }
+}

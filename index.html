@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Popup Bagels — Lead Manager</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>🥯 Popup Bagels <span>Lead Manager</span></h1>
+      <p class="tagline">Tall-building outreach pipeline for the Chicago pop-up crew.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- 1. PIPELINE SUMMARY ------------------------------------------------ -->
+    <section id="summary-section" aria-labelledby="summary-heading">
+      <h2 id="summary-heading">Pipeline summary</h2>
+      <!-- Cards rebuilt from derived state on every change -->
+      <div id="summary-cards" class="summary-cards"></div>
+    </section>
+
+    <!-- 2. FOLLOW-UP QUEUE ------------------------------------------------- -->
+    <section id="followup-section" aria-labelledby="followup-heading">
+      <h2 id="followup-heading">
+        Follow-up queue
+        <span class="hint">Reached Out, but quiet for 7+ days</span>
+      </h2>
+      <div id="followup-list" class="followup-list"></div>
+    </section>
+
+    <!-- 3. ADD / EDIT FORM ------------------------------------------------- -->
+    <section id="form-section" aria-labelledby="form-heading">
+      <h2 id="form-heading">Add a building</h2>
+      <form id="building-form" novalidate>
+        <!-- Hidden id: empty = adding, populated = editing an existing lead -->
+        <input type="hidden" id="building-id" value="" />
+
+        <div class="field">
+          <label for="name">Building name</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Willis Tower" />
+          <p class="error" id="name-error"></p>
+        </div>
+
+        <div class="field">
+          <label for="address">Address</label>
+          <input type="text" id="address" name="address" placeholder="e.g. 233 S Wacker Dr" />
+          <p class="error" id="address-error"></p>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="floors">Floors</label>
+            <input type="number" id="floors" name="floors" min="1" placeholder="e.g. 110" />
+            <p class="error" id="floors-error"></p>
+          </div>
+
+          <div class="field">
+            <label for="status">Starting status</label>
+            <select id="status" name="status"></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="contact">Contact / notes</label>
+          <textarea id="contact" name="contact" rows="2"
+            placeholder="Who we're talking to, or notes about access"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="lastContacted">Last contacted</label>
+          <input type="date" id="lastContacted" name="lastContacted" />
+          <p class="hint">Used to flag stale follow-ups. Leave blank if never contacted.</p>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="submit-btn" class="btn primary">Add building</button>
+          <button type="button" id="cancel-edit-btn" class="btn ghost" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 4. LEAD LIST ------------------------------------------------------- -->
+    <section id="list-section" aria-labelledby="list-heading">
+      <div class="list-header">
+        <h2 id="list-heading">Leads</h2>
+        <div class="list-controls">
+          <label for="filter" class="filter-label">Filter:</label>
+          <select id="filter"></select>
+          <button type="button" id="reset-btn" class="btn danger">Reset all</button>
+        </div>
+      </div>
+      <div id="lead-list" class="lead-list"></div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p class="wrap">Static demo · data lives in your browser (localStorage) · no server, no tracking.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
