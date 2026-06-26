@@ -34,6 +34,17 @@
   --radius: 12px;
 }
 
+/* Brand header typeface. Self-hosted Space Grotesk (SIL Open Font License),
+   used as a free, redistributable stand-in for PopUp Bagels' commercial
+   FFF Acid Grotesk. Applied ONLY to the top header brand text. */
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('fonts/space-grotesk-variable.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 * { box-sizing: border-box; }
 /* `display` rules below would otherwise override the hidden attribute. */
 [hidden] { display: none !important; }
@@ -66,7 +77,12 @@ button { font: inherit; }
   width: 34px; height: 34px; border-radius: 9px;
   display: grid; place-items: center;
 }
-.brand-name { font-weight: 700; }
+.brand-name {
+  font-weight: 700;
+  /* Brand typeface — header only; the rest of the CRM keeps its system stack. */
+  font-family: 'Space Grotesk', system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: -0.02em;
+}
 .brand-name em { font-style: normal; font-weight: 400; opacity: .7; }
 
 .topnav-tools { display: flex; align-items: center; gap: 10px; }
