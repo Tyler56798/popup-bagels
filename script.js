@@ -1,544 +1,644 @@
 /* ===================================================================
-   Popup Bagels Lead Manager
-   Vanilla JS. State lives in `buildings`, persists to localStorage.
+   PopUp Bagels Lead Manager — CRM logic (vanilla JS)
 
-   Architecture:
-   - STATE layer  : load/save, and mutators (add/update/delete/reset).
-   - DERIVE layer : derive() takes the array and returns all computed
-                    values (counts, totals, follow-up queue) so every
-                    view reads from one source of truth.
-   - RENDER layer : functions that wipe + rebuild DOM from state.
-   - render()     : the single entry point called after every change.
+   Layers, kept separate:
+     STATE   : load/save (localStorage) + mutations
+     DERIVE  : derive() -> stats; applyView() -> filtered+sorted list
+     DISPLAY : label dictionary + value expanders (no raw codes ever)
+     RENDER  : build DOM from state
+   Data comes from window.POPUP_BAGELS_DATA (data.js).
    =================================================================== */
 
 'use strict';
 
-/* ---- Constants ---------------------------------------------------- */
+/* ===================== Constants & dictionaries ==================== */
 
-// Pipeline stages, in order. Order also drives the dropdowns.
-const STATUSES = [
-  'Not Contacted',
-  'Reached Out',
-  'Followed Up',
-  'Booked',
-  'Declined',
-];
+const STAGES = ['Not Contacted', 'Reached Out', 'Followed Up', 'Booked', 'Declined'];
 
-// Map each status to its CSS modifier so badges/cards stay color-coded.
-const STATUS_CLASS = {
-  'Not Contacted': 'st-not',
-  'Reached Out': 'st-reached',
-  'Followed Up': 'st-followed',
-  'Booked': 'st-booked',
-  'Declined': 'st-declined',
+const STAGE_CLASS = {
+  'Not Contacted': 'stage-not',
+  'Reached Out': 'stage-reached',
+  'Followed Up': 'stage-followed',
+  'Booked': 'stage-booked',
+  'Declined': 'stage-declined',
 };
 
-const STORAGE_KEY = 'popupBagels.leads.v1';
-const FOLLOWUP_DAYS = 7;   // a "Reached Out" lead this stale needs a nudge
+// Human labels for every field shown in the detail panel.
+const LABELS = {
+  buildingName: 'Building Name', alsoKnownAs: 'Also Known As',
+  streetAddress: 'Street Address', zip: 'ZIP Code', submarket: 'Submarket',
+  classRating: 'Building Class', classRatingSource: 'Class Rating Source',
+  yearBuiltOrRenovated: 'Year Built / Renovated', yearBuilt: 'Year Built',
+  officeOrMixedUse: 'Property Type', multiTenantOffice: 'Multi-Tenant Office',
+  rentableSf: 'Rentable Square Feet', numFloors: 'Number of Floors',
+  lobbyType: 'Lobby Type', estDaytimePopulation: 'Estimated Daytime Population',
+  estDaytimePopulationBasis: 'Daytime Population Basis',
+  ownerEntity: 'Ownership Entity', ownerSourceUrl: 'Ownership Source',
+  ownerVerifiedDate: 'Ownership Verified Date', recentOwnershipChange: 'Recent Ownership Change',
+  propertyManagerFirm: 'Property Manager', inHouseManagement: 'In-House Management',
+  leasingBrokerage: 'Leasing Brokerage', buildingWebsite: 'Building Website',
+  tenantApp: 'Tenant App', tenantExperienceProgramName: 'Tenant Experience Program',
+  popUpLobbyViability: 'Pop-Up Lobby Viability', popUpLobbyViabilityRationale: 'Pop-Up Viability Rationale',
+  buildingStatus: 'Building Status', magMileCohort: 'Magnificent Mile Cohort',
+  confidence1c: 'Data Confidence', lastVerifiedDate1c: 'Last Verified',
+  mainManagementPhone: 'Main Management Phone', generalInfoEmail: 'General Info Email',
+  leasingContactEmail: 'Leasing Contact Email',
+  lobbyActivationHistory: 'Lobby Activation History', lobbyActivationEvidence: 'Activation Evidence',
+  knownFoodVendorsOnsite: 'Known Food Vendors On-Site', recentLeasingActivity: 'Recent Leasing Activity',
+  recentLeasingEvidence: 'Recent Leasing Evidence',
+  anchorTenantsTop5: 'Anchor Tenants', industryMixSummary: 'Industry Mix',
+  softCriteriaCount: 'Soft Criteria Met (out of 4)', leadScore: 'Lead Score',
+  leadScoreRationale: 'Lead Score Rationale', wave: 'Outreach Wave',
+  outreachStatus: 'Outreach Status', magMilePlay: 'Magnificent Mile Strategy',
+  notes: 'Notes',
+};
 
-/* ---- State ------------------------------------------------------- */
+// Detail-panel sections (Contacts is rendered specially).
+const SECTIONS = [
+  { title: 'Building Overview', keys: ['alsoKnownAs', 'streetAddress', 'zip', 'submarket', 'classRating', 'classRatingSource', 'yearBuiltOrRenovated', 'officeOrMixedUse', 'multiTenantOffice', 'rentableSf', 'numFloors', 'lobbyType', 'estDaytimePopulation', 'estDaytimePopulationBasis', 'buildingStatus', 'buildingWebsite'] },
+  { title: 'Ownership & Management', keys: ['ownerEntity', 'ownerSourceUrl', 'ownerVerifiedDate', 'recentOwnershipChange', 'propertyManagerFirm', 'inHouseManagement', 'leasingBrokerage', 'mainManagementPhone', 'generalInfoEmail', 'leasingContactEmail'] },
+  { title: 'Tenant Experience & Activation', keys: ['tenantApp', 'tenantExperienceProgramName', 'lobbyActivationHistory', 'lobbyActivationEvidence', 'knownFoodVendorsOnsite', 'recentLeasingActivity', 'recentLeasingEvidence'] },
+  { title: 'Contacts', contacts: true },
+  { title: 'Tenants & Industry', keys: ['anchorTenantsTop5', 'industryMixSummary'] },
+  { title: 'Pop-Up Viability', keys: ['popUpLobbyViability', 'popUpLobbyViabilityRationale'] },
+  { title: 'Lead Scoring & Strategy', keys: ['leadScore', 'leadScoreRationale', 'softCriteriaCount', 'wave', 'outreachStatus', 'magMileCohort', 'magMilePlay', 'confidence1c', 'lastVerifiedDate1c', 'notes'] },
+];
 
-let buildings = [];   // the single source of truth
-let nextId = 1;       // monotonically increasing id, restored on load
-let currentFilter = 'All';
+// Value expansion maps (never show a raw code).
+const LOBBY_MAP = { security_gated: 'Security-Gated', open_public: 'Open to the Public', hybrid: 'Hybrid (public + secured)' };
+const STATUS_MAP = { operating_normal: 'Operating Normally', operating_with_vacancy: 'Operating with Vacancy', recently_delivered: 'Recently Delivered' };
+const VIA_MAP = { strong: 'Strong', acceptable: 'Acceptable', weak: 'Weak', not_viable: 'Not Viable' };
+const VIA_CLASS = { strong: 'via-strong', acceptable: 'via-acceptable', weak: 'via-weak', not_viable: 'via-not_viable' };
+const MAGMILE_MAP = { primary: 'Primary (lead contact)', secondary: 'Secondary (warm intro)', parallel: 'Parallel (pitch separately)' };
+const EMAIL_STATUS_MAP = { verified: 'Verified', pattern_unverified: 'Pattern (unverified)', not_found: 'Not found' };
+const PROPTYPE_MAP = { office: 'Office', mixed_use: 'Mixed-Use' };
 
-/** Load from localStorage, or seed on first ever load. */
+const URL_KEYS = new Set(['buildingWebsite', 'ownerSourceUrl', 'txLinkedinUrl', 'gmLinkedinUrl', 'opsLinkedinUrl']);
+const YESNO_KEYS = new Set(['multiTenantOffice', 'magMileCohort', 'recentOwnershipChange', 'inHouseManagement', 'lobbyActivationHistory', 'recentLeasingActivity']);
+
+const STORAGE_KEY = 'popupBagels.crm.v2';
+
+/* ===================== Display helpers ============================ */
+
+function cap(s) { s = String(s || '').trim(); return s ? s[0].toUpperCase() + s.slice(1) : ''; }
+function titleCaseCode(s) {
+  return String(s || '').trim().replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+}
+function fmtNum(n) { return Number(n || 0).toLocaleString('en-US'); }
+
+// yes/no, preserving any parenthetical qualifier in the source.
+function yesNo(v) {
+  const s = String(v || '').trim();
+  if (!s) return '';
+  const low = s.toLowerCase();
+  if (low.startsWith('yes')) return 'Yes' + s.slice(3);
+  if (low.startsWith('no')) return 'No' + s.slice(2);
+  if (low === 'unknown') return 'Unknown';
+  return cap(s);
+}
+
+// The one place a raw stored value becomes display text. Returns '' to skip.
+function formatValue(key, b) {
+  const v = b[key];
+  if (key === 'notes') {
+    return [b.notes, b.notes1b, b.notes1c]
+      .map((x) => String(x || '').trim()).filter(Boolean)
+      .filter((x, i, arr) => arr.indexOf(x) === i).join('  •  ');
+  }
+  const raw = String(v == null ? '' : v).trim();
+  if (raw === '') return '';
+
+  switch (key) {
+    case 'rentableSf': return fmtNum(b.rentableSfNum) + ' sq ft';
+    case 'estDaytimePopulation': return fmtNum(b.estDaytimePopulationNum) + ' people';
+    case 'lobbyType': return LOBBY_MAP[raw] || titleCaseCode(raw);
+    case 'buildingStatus': return STATUS_MAP[raw] || titleCaseCode(raw);
+    case 'officeOrMixedUse': return PROPTYPE_MAP[raw] || titleCaseCode(raw);
+    case 'popUpLobbyViability': return VIA_MAP[raw] || cap(raw);
+    case 'magMilePlay': return MAGMILE_MAP[raw] || titleCaseCode(raw);
+    case 'confidence1c': return cap(raw);
+    case 'softCriteriaCount': return (b.softCriteriaCountNum || 0) + ' of 4';
+    case 'wave': return /^\d+$/.test(raw) ? 'Wave ' + raw : titleCaseCode(raw);
+    case 'txEmailStatus': case 'gmEmailStatus': case 'opsEmailStatus':
+      return EMAIL_STATUS_MAP[raw] || titleCaseCode(raw);
+    default:
+      if (YESNO_KEYS.has(key)) return yesNo(raw);
+      return raw;
+  }
+}
+
+function viabilityDisplay(raw) { return VIA_MAP[raw] || cap(raw) || '—'; }
+function hostname(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; } }
+
+/* ===================== Tiny DOM helpers =========================== */
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+function link(url, label) {
+  const a = el('a', null, label || url);
+  a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  return a;
+}
+
+/* ===================== State ====================================== */
+
+let buildings = [];
+const view = { stage: 'All', submarket: 'All', viability: 'All', wave: 'All', magMile: false, search: '', sort: 'score-desc' };
+let selectedId = null;
+
+function freshFromData() {
+  // Deep clone so edits never mutate the seed in data.js.
+  return JSON.parse(JSON.stringify(window.POPUP_BAGELS_DATA || []));
+}
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw === null) {
-    buildings = seedBuildings();
-    saveState();
-  } else {
+  if (raw) {
     try {
-      buildings = JSON.parse(raw);
-      if (!Array.isArray(buildings)) buildings = [];
-    } catch (e) {
-      // Corrupt storage — start clean rather than crash.
-      buildings = [];
-    }
+      const parsed = JSON.parse(raw);
+      buildings = Array.isArray(parsed) ? parsed : freshFromData();
+    } catch (e) { buildings = freshFromData(); }
+  } else {
+    buildings = freshFromData();
   }
-  // Restore the id counter above any existing id so we never collide.
-  nextId = buildings.reduce((max, b) => Math.max(max, b.id), 0) + 1;
 }
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(buildings)); }
 
-/** Persist the array. Dates are stored as ISO strings (JSON-safe). */
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(buildings));
-}
-
-/** Add a new building from already-validated field values. */
-function addBuilding(data) {
-  buildings.push({
-    id: nextId++,
-    name: data.name,
-    address: data.address,
-    floors: data.floors,
-    contact: data.contact,
-    status: data.status,
-    lastContacted: data.lastContacted, // ISO 'YYYY-MM-DD' or '' (never)
-  });
-  saveState();
-}
-
-/** Update an existing building in place. */
-function updateBuilding(id, data) {
+function setStage(id, stage) {
   const b = buildings.find((x) => x.id === id);
-  if (!b) return;
-  Object.assign(b, data);
-  saveState();
+  if (b) { b.outreachStatus = stage; saveState(); }
 }
+function deleteBuilding(id) { buildings = buildings.filter((b) => b.id !== id); saveState(); }
+function resetToOriginal() { buildings = freshFromData(); localStorage.removeItem(STORAGE_KEY); }
 
-/** Change only the status (used by the per-card dropdown). */
-function setStatus(id, status) {
-  const b = buildings.find((x) => x.id === id);
-  if (!b) return;
-  b.status = status;
-  saveState();
-}
+/* ===================== Derived values ============================= */
 
-/** Remove a building. */
-function deleteBuilding(id) {
-  buildings = buildings.filter((b) => b.id !== id);
-  saveState();
-}
-
-/** Clear everything (called after confirmation). */
-function resetState() {
-  buildings = [];
-  saveState();
-}
-
-/* ---- Derived values ---------------------------------------------- */
-
-/**
- * The one place output is computed from state. Returns:
- *   total       — number of leads
- *   counts      — { status: n } for every status
- *   followUps   — leads that are "Reached Out" and stale (>= FOLLOWUP_DAYS)
- * Both the summary and the follow-up queue read from this, so the
- * numbers can never disagree with the list.
- */
+// All stat-bar numbers derive from state here.
 function derive(list) {
   const counts = {};
-  STATUSES.forEach((s) => (counts[s] = 0));
-
-  const followUps = [];
+  STAGES.forEach((s) => (counts[s] = 0));
+  let strong = 0, pop = 0;
   for (const b of list) {
-    if (counts[b.status] !== undefined) counts[b.status]++;
-
-    if (b.status === 'Reached Out') {
-      const days = daysSince(b.lastContacted);
-      // days === null means "never contacted" — also worth chasing.
-      if (days === null || days >= FOLLOWUP_DAYS) {
-        followUps.push({ building: b, days });
-      }
-    }
+    if (counts[b.outreachStatus] !== undefined) counts[b.outreachStatus]++;
+    if (b.popUpLobbyViability === 'strong') strong++;
+    pop += b.estDaytimePopulationNum || 0;
   }
-
-  return { total: list.length, counts, followUps };
+  return { total: list.length, counts, strong, pop };
 }
 
-/**
- * Whole-day difference between today and an ISO date string.
- * Returns null when no date is set. Compares at date granularity
- * (midnight to midnight) to avoid off-by-one from clock time.
- */
-function daysSince(isoDate) {
-  if (!isoDate) return null;
-  const then = new Date(isoDate + 'T00:00:00');
-  if (isNaN(then.getTime())) return null;
+// Filtered + sorted list for the table (derived, never mutates state).
+function applyView() {
+  let list = buildings.filter((b) => {
+    if (view.stage !== 'All' && b.outreachStatus !== view.stage) return false;
+    if (view.submarket !== 'All' && b.submarket !== view.submarket) return false;
+    if (view.viability !== 'All' && b.popUpLobbyViability !== view.viability) return false;
+    if (view.wave !== 'All' && String(b.wave) !== view.wave) return false;
+    if (view.magMile && String(b.magMileCohort).toLowerCase() !== 'yes') return false;
+    if (view.search) {
+      const hay = (b.buildingName + ' ' + (b.alsoKnownAs || '')).toLowerCase();
+      if (!hay.includes(view.search.toLowerCase())) return false;
+    }
+    return true;
+  });
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const MS_PER_DAY = 24 * 60 * 60 * 1000;
-  return Math.floor((today - then) / MS_PER_DAY);
+  const by = view.sort;
+  list.sort((a, b) => {
+    if (by === 'score-desc') return (b.leadScoreNum - a.leadScoreNum) || (b.estDaytimePopulationNum - a.estDaytimePopulationNum);
+    if (by === 'pop-desc') return b.estDaytimePopulationNum - a.estDaytimePopulationNum;
+    if (by === 'name-asc') return a.buildingName.localeCompare(b.buildingName);
+    return 0;
+  });
+  return list;
 }
 
-/** Filter the list by status for display only (does not mutate state). */
-function visibleBuildings() {
-  if (currentFilter === 'All') return buildings;
-  return buildings.filter((b) => b.status === currentFilter);
-}
+/* ===================== Rendering ================================== */
 
-/* ---- Rendering --------------------------------------------------- */
-
-/** Master render: rebuild every view from current state. */
 function render() {
-  const d = derive(buildings);
-  renderSummary(d);
-  renderFollowups(d);
-  renderList();
+  renderStats(derive(buildings));
+  renderTable(applyView());
 }
 
-function renderSummary(d) {
-  const el = document.getElementById('summary-cards');
-  el.innerHTML = '';
+function renderStats(d) {
+  const bar = document.getElementById('statbar');
+  bar.innerHTML = '';
 
-  el.appendChild(summaryCard('Total leads', d.total, 'total'));
-  STATUSES.forEach((s) => {
-    el.appendChild(summaryCard(s, d.counts[s], STATUS_CLASS[s]));
+  bar.appendChild(statCard(d.total, 'Total buildings', 'accent'));
+  STAGES.forEach((s) => {
+    const card = statCard(d.counts[s], s);
+    const dot = el('span', 'dot');
+    dot.style.background = `var(--${cssVarForStage(s)})`;
+    card.querySelector('.k').prepend(dot);
+    bar.appendChild(card);
   });
+  bar.appendChild(statCard(d.strong, 'Strong viability'));
+  bar.appendChild(statCard(fmtNum(d.pop), 'Daytime population'));
+}
+function cssVarForStage(s) {
+  return { 'Not Contacted': 'st-not', 'Reached Out': 'st-reached', 'Followed Up': 'st-followed', 'Booked': 'st-booked', 'Declined': 'st-declined' }[s];
+}
+function statCard(value, label, extra) {
+  const c = el('div', 'stat' + (extra ? ' ' + extra : ''));
+  c.appendChild(el('div', 'v', String(value)));
+  c.appendChild(el('div', 'k', label));
+  return c;
 }
 
-function summaryCard(label, count, cls) {
-  const card = document.createElement('div');
-  card.className = 'summary-card ' + cls;
-  card.innerHTML =
-    '<div class="count"></div><div class="label"></div>';
-  card.querySelector('.count').textContent = count;
-  card.querySelector('.label').textContent = label;
-  return card;
-}
+function renderTable(list) {
+  const body = document.getElementById('leads-body');
+  const empty = document.getElementById('empty-state');
+  body.innerHTML = '';
 
-function renderFollowups(d) {
-  const el = document.getElementById('followup-list');
-  el.innerHTML = '';
+  document.getElementById('result-count').innerHTML =
+    'Buildings <span>· ' + list.length + ' of ' + buildings.length + '</span>';
 
-  if (d.followUps.length === 0) {
-    el.appendChild(emptyMsg('All clear — nobody reached out is overdue. 🎉'));
-    return;
-  }
-
-  d.followUps.forEach(({ building, days }) => {
-    const item = document.createElement('div');
-    item.className = 'followup-item';
-
-    const left = document.createElement('div');
-    const title = document.createElement('strong');
-    title.textContent = building.name;
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.textContent = building.address;
-    left.appendChild(title);
-    left.appendChild(meta);
-
-    const right = document.createElement('div');
-    right.className = 'stale';
-    right.textContent =
-      days === null ? 'Never logged a contact' : days + ' days since contact';
-
-    item.appendChild(left);
-    item.appendChild(right);
-    el.appendChild(item);
-  });
-}
-
-function renderList() {
-  const el = document.getElementById('lead-list');
-  el.innerHTML = '';
-
-  const list = visibleBuildings();
-
-  if (buildings.length === 0) {
-    el.appendChild(emptyMsg('No leads yet. Add a building above to get started.'));
-    return;
-  }
   if (list.length === 0) {
-    el.appendChild(emptyMsg('No leads match the "' + currentFilter + '" filter.'));
+    empty.hidden = false;
+    empty.textContent = buildings.length === 0
+      ? 'No buildings. Use “Reset data” to reload the dataset.'
+      : 'No buildings match the current filters.';
     return;
   }
+  empty.hidden = true;
 
-  list.forEach((b) => el.appendChild(leadCard(b)));
+  list.forEach((b) => body.appendChild(leadRow(b)));
 }
 
-/** Build one lead card. Uses textContent for all user data (no innerHTML
-    injection of unescaped strings). */
-function leadCard(b) {
-  const card = document.createElement('div');
-  card.className = 'lead-card';
+function leadRow(b) {
+  const tr = el('tr');
+  tr.tabIndex = 0;
+  tr.setAttribute('role', 'button');
+  tr.setAttribute('aria-label', 'Open ' + b.buildingName);
 
-  // Top: name + address on the left, color-coded badge on the right.
-  const top = document.createElement('div');
-  top.className = 'card-top';
+  // Name + also-known-as
+  const name = el('td', 'cell-name');
+  name.appendChild(document.createTextNode(b.buildingName));
+  if (b.alsoKnownAs) name.appendChild(el('small', null, b.alsoKnownAs));
+  tr.appendChild(name);
 
-  const titleWrap = document.createElement('div');
-  const h3 = document.createElement('h3');
-  h3.textContent = b.name;
-  const addr = document.createElement('p');
-  addr.className = 'addr';
-  addr.textContent = b.address;
-  titleWrap.appendChild(h3);
-  titleWrap.appendChild(addr);
+  tr.appendChild(el('td', null, b.submarket || '—'));
+  tr.appendChild(el('td', null, b.classRating ? 'Class ' + b.classRating : '—'));
 
-  const badge = document.createElement('span');
-  badge.className = 'badge ' + STATUS_CLASS[b.status];
-  badge.textContent = b.status;
+  // Lead score chip
+  const scoreTd = el('td', 'cell-score');
+  const chip = el('span', 'score score-' + (b.leadScoreNum || 0), String(b.leadScoreNum || 0));
+  scoreTd.appendChild(chip);
+  tr.appendChild(scoreTd);
 
-  top.appendChild(titleWrap);
-  top.appendChild(badge);
+  // Viability badge
+  const viaTd = el('td');
+  const via = el('span', 'badge ' + (VIA_CLASS[b.popUpLobbyViability] || 'via-not_viable'), viabilityDisplay(b.popUpLobbyViability));
+  viaTd.appendChild(via);
+  tr.appendChild(viaTd);
 
-  // Detail list: floors, contact, last contacted.
-  const dl = document.createElement('dl');
-  addDetail(dl, 'Floors', String(b.floors));
-  addDetail(dl, 'Contact', b.contact ? b.contact : '—');
-  addDetail(dl, 'Last contacted', formatDate(b.lastContacted));
+  // Inline stage select (does not open the panel)
+  const stageTd = el('td');
+  const wrap = el('span', 'row-stage');
+  const sel = stageSelect(b.outreachStatus);
+  sel.name = 'stage-' + b.id;
+  sel.setAttribute('aria-label', 'Outreach stage for ' + b.buildingName);
+  sel.classList.add(STAGE_CLASS[b.outreachStatus]);
+  sel.addEventListener('click', (e) => e.stopPropagation());
+  sel.addEventListener('change', () => { setStage(b.id, sel.value); render(); if (selectedId === b.id) openDetail(b.id); });
+  wrap.appendChild(sel);
+  stageTd.appendChild(wrap);
+  tr.appendChild(stageTd);
 
-  // Status dropdown — change moves the lead through the pipeline.
-  const statusRow = document.createElement('div');
-  statusRow.className = 'card-status-row';
-  const select = buildStatusSelect(b.status);
-  select.addEventListener('change', () => {
-    setStatus(b.id, select.value);
-    render();
+  tr.addEventListener('click', () => openDetail(b.id));
+  tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(b.id); } });
+  return tr;
+}
+
+function stageSelect(current) {
+  const sel = el('select');
+  STAGES.forEach((s) => {
+    const o = el('option', null, s); o.value = s;
+    if (s === current) o.selected = true;
+    sel.appendChild(o);
   });
-  statusRow.appendChild(select);
-
-  // Edit + delete.
-  const actions = document.createElement('div');
-  actions.className = 'card-actions';
-
-  const editBtn = document.createElement('button');
-  editBtn.className = 'btn ghost small';
-  editBtn.textContent = 'Edit';
-  editBtn.addEventListener('click', () => startEdit(b.id));
-
-  const delBtn = document.createElement('button');
-  delBtn.className = 'btn danger small';
-  delBtn.textContent = 'Delete';
-  delBtn.addEventListener('click', () => {
-    if (confirm('Delete "' + b.name + '" from the lead list?')) {
-      deleteBuilding(b.id);
-      render();
-    }
-  });
-
-  actions.appendChild(editBtn);
-  actions.appendChild(delBtn);
-  statusRow.appendChild(actions);
-
-  card.appendChild(top);
-  card.appendChild(dl);
-  card.appendChild(statusRow);
-  return card;
+  return sel;
 }
 
-function addDetail(dl, label, value) {
-  const dt = document.createElement('dt');
-  dt.textContent = label;
-  const dd = document.createElement('dd');
-  dd.textContent = value;
-  dl.appendChild(dt);
-  dl.appendChild(dd);
-}
+/* ---------- Detail slide-in panel ---------- */
 
-function emptyMsg(text) {
-  const div = document.createElement('div');
-  div.className = 'empty';
-  div.textContent = text;
-  return div;
-}
-
-/** Human-friendly date, or a clear placeholder. Never shows "Invalid Date". */
-function formatDate(isoDate) {
-  if (!isoDate) return 'Never';
-  const d = new Date(isoDate + 'T00:00:00');
-  if (isNaN(d.getTime())) return 'Never';
-  return d.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-/* ---- Dropdown builders ------------------------------------------- */
-
-function buildStatusSelect(selected) {
-  const select = document.createElement('select');
-  STATUSES.forEach((s) => {
-    const opt = document.createElement('option');
-    opt.value = s;
-    opt.textContent = s;
-    if (s === selected) opt.selected = true;
-    select.appendChild(opt);
-  });
-  return select;
-}
-
-/** Populate the form's starting-status select and the filter select. */
-function populateStaticSelects() {
-  const statusSel = document.getElementById('status');
-  STATUSES.forEach((s) => {
-    const opt = document.createElement('option');
-    opt.value = s;
-    opt.textContent = s;
-    statusSel.appendChild(opt);
-  });
-
-  const filterSel = document.getElementById('filter');
-  ['All', ...STATUSES].forEach((s) => {
-    const opt = document.createElement('option');
-    opt.value = s;
-    opt.textContent = s;
-    filterSel.appendChild(opt);
-  });
-}
-
-/* ---- Form handling (add + edit) ---------------------------------- */
-
-/**
- * Validate the form fields. Returns the cleaned data object on success,
- * or null after painting inline errors. Never uses alert().
- */
-function readAndValidateForm() {
-  const name = document.getElementById('name').value.trim();
-  const address = document.getElementById('address').value.trim();
-  const floorsRaw = document.getElementById('floors').value.trim();
-  const contact = document.getElementById('contact').value.trim();
-  const status = document.getElementById('status').value;
-  const lastContacted = document.getElementById('lastContacted').value; // '' or ISO
-
-  // Clear previous errors first.
-  setError('name', '');
-  setError('address', '');
-  setError('floors', '');
-
-  let ok = true;
-
-  if (name === '') {
-    setError('name', 'Building name is required.');
-    ok = false;
-  }
-  if (address === '') {
-    setError('address', 'Address is required.');
-    ok = false;
-  }
-
-  // floors must parse to a positive whole number.
-  const floors = Number(floorsRaw);
-  if (floorsRaw === '' || !Number.isFinite(floors) || floors <= 0 || !Number.isInteger(floors)) {
-    setError('floors', 'Floors must be a positive whole number.');
-    ok = false;
-  }
-
-  if (!ok) return null;
-  return { name, address, floors, contact, status, lastContacted };
-}
-
-function setError(field, message) {
-  document.getElementById(field + '-error').textContent = message;
-  document.getElementById(field).classList.toggle('invalid', message !== '');
-}
-
-function handleSubmit(event) {
-  event.preventDefault();
-  const data = readAndValidateForm();
-  if (!data) return; // errors already shown inline
-
-  const editingId = document.getElementById('building-id').value;
-  if (editingId === '') {
-    addBuilding(data);
-  } else {
-    updateBuilding(Number(editingId), data);
-  }
-
-  resetForm();
-  render();
-}
-
-/** Load a building's values into the form for editing. */
-function startEdit(id) {
+function openDetail(id) {
   const b = buildings.find((x) => x.id === id);
   if (!b) return;
+  selectedId = id;
 
-  document.getElementById('building-id').value = String(b.id);
-  document.getElementById('name').value = b.name;
-  document.getElementById('address').value = b.address;
-  document.getElementById('floors').value = b.floors;
-  document.getElementById('contact').value = b.contact;
-  document.getElementById('status').value = b.status;
-  document.getElementById('lastContacted').value = b.lastContacted || '';
+  document.getElementById('detail-title').textContent = b.buildingName;
+  const sub = [b.submarket, b.classRating ? 'Class ' + b.classRating : '', b.streetAddress].filter(Boolean).join('  ·  ');
+  document.getElementById('detail-sub').textContent = sub;
 
-  document.getElementById('form-heading').textContent = 'Edit building';
-  document.getElementById('submit-btn').textContent = 'Save changes';
-  document.getElementById('cancel-edit-btn').hidden = false;
+  // Stage dropdown in the panel
+  const stageWrap = document.getElementById('detail-stage');
+  stageWrap.innerHTML = '';
+  STAGES.forEach((s) => { const o = el('option', null, s); o.value = s; if (s === b.outreachStatus) o.selected = true; stageWrap.appendChild(o); });
 
-  // Bring the form into view so it's obvious we switched to edit mode.
-  document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });
+  const body = document.getElementById('detail-body');
+  body.innerHTML = '';
+  SECTIONS.forEach((sec) => {
+    if (sec.contacts) { const node = contactsSection(b); if (node) body.appendChild(node); return; }
+    const node = kvSection(sec, b);
+    if (node) body.appendChild(node);
+  });
+
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden', 'false');
+  document.getElementById('panel-overlay').hidden = false;
+  requestAnimationFrame(() => document.getElementById('panel-overlay').classList.add('show'));
 }
 
-/** Reset the form back to "add" mode and clear errors. */
-function resetForm() {
-  document.getElementById('building-form').reset();
-  document.getElementById('building-id').value = '';
-  setError('name', '');
-  setError('address', '');
-  setError('floors', '');
-  document.getElementById('form-heading').textContent = 'Add a building';
-  document.getElementById('submit-btn').textContent = 'Add building';
-  document.getElementById('cancel-edit-btn').hidden = true;
+function kvSection(sec, b) {
+  const dl = el('dl', 'kv');
+  let any = false;
+  sec.keys.forEach((key) => {
+    const val = formatValue(key, b);
+    if (!val) return;
+    any = true;
+    dl.appendChild(el('dt', null, LABELS[key] || titleCaseCode(key)));
+    const dd = el('dd');
+    if (URL_KEYS.has(key)) {
+      const label = key === 'buildingWebsite' ? hostname(val) : (key === 'ownerSourceUrl' ? 'View source' : 'LinkedIn');
+      dd.appendChild(/^https?:\/\//.test(val) ? link(val, label) : document.createTextNode(val));
+    } else {
+      dd.textContent = val;
+    }
+    dl.appendChild(dd);
+  });
+  if (!any) return null;
+  const section = el('div', 'section');
+  section.appendChild(el('h3', null, sec.title));
+  section.appendChild(dl);
+  return section;
 }
 
-/* ---- Seed data --------------------------------------------------- */
-
-/**
- * 5–6 realistic Chicago office towers so the demo isn't empty.
- * lastContacted is computed relative to today so the follow-up queue
- * has something to show no matter when the page is first opened.
- */
-function seedBuildings() {
-  const seeds = [
-    { name: 'Willis Tower', address: '233 S Wacker Dr', floors: 110,
-      contact: 'Property mgmt — EQ Office front desk', status: 'Reached Out', daysAgo: 12 },
-    { name: 'Aon Center', address: '200 E Randolph St', floors: 83,
-      contact: 'Tenant services coordinator', status: 'Followed Up', daysAgo: 3 },
-    { name: 'Franklin Center', address: '227 W Monroe St', floors: 60,
-      contact: 'Lobby events lead, Tishman Speyer', status: 'Booked', daysAgo: 5 },
-    { name: 'Chase Tower', address: '10 S Dearborn St', floors: 60,
-      contact: '', status: 'Not Contacted', daysAgo: null },
-    { name: '875 N Michigan Ave (Hancock)', address: '875 N Michigan Ave', floors: 100,
-      contact: 'Observatory/retail liaison', status: 'Reached Out', daysAgo: 9 },
-    { name: 'Two Prudential Plaza', address: '180 N Stetson Ave', floors: 64,
-      contact: 'Declined — no food vendors policy', status: 'Declined', daysAgo: 20 },
+function contactsSection(b) {
+  const defs = [
+    { role: 'Tenant Experience', p: 'tx' },
+    { role: 'General Manager', p: 'gm' },
+    { role: 'Operations', p: 'ops' },
   ];
+  const section = el('div', 'section');
+  section.appendChild(el('h3', null, 'Contacts'));
+  let any = false;
 
-  let id = 1;
-  return seeds.map((s) => ({
-    id: id++,
-    name: s.name,
-    address: s.address,
-    floors: s.floors,
-    contact: s.contact,
-    status: s.status,
-    lastContacted: s.daysAgo === null ? '' : isoDaysAgo(s.daysAgo),
-  }));
+  defs.forEach((d) => {
+    const name = b[d.p + 'Name'], title = b[d.p + 'Title'];
+    const email = b[d.p + 'Email'], phone = b[d.p + 'Phone'];
+    const status = b[d.p + 'EmailStatus'], linkedin = b[d.p + 'LinkedinUrl'], source = b[d.p + 'Source'];
+    if (!name && !title) return; // no person on file for this role
+    any = true;
+
+    const card = el('div', 'contact-card');
+    card.appendChild(el('div', 'cc-role', d.role));
+    card.appendChild(el('div', 'cc-name', name || '—'));
+    if (title) card.appendChild(el('div', 'cc-title', title));
+
+    if (email) {
+      const line = el('div', 'cc-line');
+      line.appendChild(el('span', null, 'Email: '));
+      line.appendChild(document.createTextNode(email));
+      if (status) line.appendChild(document.createTextNode('  (' + (EMAIL_STATUS_MAP[status] || titleCaseCode(status)) + ')'));
+      card.appendChild(line);
+    } else if (status) {
+      // Email itself is masked/absent, but the pattern status is still useful.
+      const line = el('div', 'cc-line');
+      line.appendChild(el('span', null, 'Email status: '));
+      line.appendChild(document.createTextNode(EMAIL_STATUS_MAP[status] || titleCaseCode(status)));
+      card.appendChild(line);
+    }
+    if (phone) {
+      const line = el('div', 'cc-line');
+      line.appendChild(el('span', null, 'Phone: '));
+      line.appendChild(document.createTextNode(phone));
+      card.appendChild(line);
+    }
+    if (linkedin && /^https?:\/\//.test(linkedin)) {
+      const line = el('div', 'cc-line');
+      line.appendChild(link(linkedin, 'LinkedIn profile'));
+      card.appendChild(line);
+    }
+    if (!email && !phone) card.appendChild(el('div', 'cc-none', 'Direct email/phone not shown in this public dataset.'));
+    if (source) card.appendChild(el('div', 'cc-none', 'Source: ' + source));
+    section.appendChild(card);
+  });
+
+  if (!any) return null;
+  return section;
 }
 
-/** ISO 'YYYY-MM-DD' for N days before today. */
-function isoDaysAgo(n) {
-  const now = new Date();
-  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - n);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return yyyy + '-' + mm + '-' + dd;
+function closeDetail() {
+  const panel = document.getElementById('detail-panel');
+  panel.classList.remove('open');
+  panel.setAttribute('aria-hidden', 'true');
+  const ov = document.getElementById('panel-overlay');
+  ov.classList.remove('show');
+  setTimeout(() => { ov.hidden = true; }, 200);
+  selectedId = null;
 }
 
-/* ---- Wire-up ----------------------------------------------------- */
+/* ===================== Filters & sort wiring ===================== */
+
+function populateFilters() {
+  const stageSel = document.getElementById('filter-stage');
+  fillSelect(stageSel, ['All', ...STAGES]);
+
+  const submarkets = [...new Set(buildings.map((b) => b.submarket).filter(Boolean))].sort();
+  fillSelect(document.getElementById('filter-submarket'), ['All', ...submarkets]);
+
+  fillSelect(document.getElementById('filter-viability'),
+    [['All', 'All'], ['strong', 'Strong'], ['acceptable', 'Acceptable'], ['weak', 'Weak'], ['not_viable', 'Not Viable']]);
+
+  const waves = [...new Set(buildings.map((b) => String(b.wave)).filter((w) => /^\d+$/.test(w)))].sort();
+  fillSelect(document.getElementById('filter-wave'),
+    [['All', 'All'], ...waves.map((w) => [w, 'Wave ' + w])]);
+
+  // Edit-modal stage select
+  fillSelect(document.getElementById('edit-stage'), STAGES);
+}
+function fillSelect(sel, items) {
+  sel.innerHTML = '';
+  items.forEach((it) => {
+    const [val, label] = Array.isArray(it) ? it : [it, it];
+    const o = el('option', null, label); o.value = val;
+    sel.appendChild(o);
+  });
+}
+
+/* ===================== Edit / Add modal ========================== */
+
+function openEdit(id) {
+  const isNew = !id;
+  const b = isNew ? null : buildings.find((x) => x.id === id);
+  document.getElementById('modal-title').textContent = isNew ? 'Add building' : 'Edit building';
+  document.getElementById('edit-id').value = isNew ? '' : id;
+  document.getElementById('edit-name').value = b ? b.buildingName : '';
+  document.getElementById('edit-address').value = b ? b.streetAddress : '';
+  document.getElementById('edit-submarket').value = b ? b.submarket : '';
+  document.getElementById('edit-class').value = b ? b.classRating : '';
+  document.getElementById('edit-floors').value = b ? (b.numFloorsNum || '') : '';
+  document.getElementById('edit-score').value = b ? (b.leadScoreNum || '') : '';
+  document.getElementById('edit-viability').value = b ? (b.popUpLobbyViability || 'acceptable') : 'acceptable';
+  document.getElementById('edit-stage').value = b ? b.outreachStatus : 'Not Contacted';
+  document.getElementById('edit-tx').value = b ? (b.txName || '') : '';
+  document.getElementById('edit-notes').value = b ? (b.notes || '') : '';
+  ['name', 'address', 'floors', 'score'].forEach((f) => setErr(f, ''));
+  document.getElementById('modal-overlay').hidden = false;
+  document.getElementById('edit-name').focus();
+}
+function closeEdit() { document.getElementById('modal-overlay').hidden = true; }
+function setErr(f, msg) {
+  document.getElementById('err-' + f).textContent = msg;
+  document.getElementById('edit-' + f).classList.toggle('invalid', !!msg);
+}
+
+function submitEdit(e) {
+  e.preventDefault();
+  const name = document.getElementById('edit-name').value.trim();
+  const address = document.getElementById('edit-address').value.trim();
+  const floorsRaw = document.getElementById('edit-floors').value.trim();
+  const scoreRaw = document.getElementById('edit-score').value.trim();
+  ['name', 'address', 'floors', 'score'].forEach((f) => setErr(f, ''));
+
+  let ok = true;
+  if (!name) { setErr('name', 'Building name is required.'); ok = false; }
+  if (!address) { setErr('address', 'Street address is required.'); ok = false; }
+  const floors = Number(floorsRaw);
+  if (floorsRaw && (!Number.isInteger(floors) || floors <= 0)) { setErr('floors', 'Floors must be a positive whole number.'); ok = false; }
+  const score = Number(scoreRaw);
+  if (scoreRaw && (!Number.isInteger(score) || score < 0 || score > 5)) { setErr('score', 'Score must be 0–5.'); ok = false; }
+  if (!ok) return;
+
+  const data = {
+    buildingName: name, streetAddress: address,
+    submarket: document.getElementById('edit-submarket').value.trim(),
+    classRating: document.getElementById('edit-class').value.trim(),
+    numFloors: floorsRaw, numFloorsNum: floorsRaw ? floors : 0,
+    leadScore: scoreRaw, leadScoreNum: scoreRaw ? score : 0,
+    popUpLobbyViability: document.getElementById('edit-viability').value,
+    outreachStatus: document.getElementById('edit-stage').value,
+    txName: document.getElementById('edit-tx').value.trim(),
+    notes: document.getElementById('edit-notes').value.trim(),
+  };
+
+  const id = document.getElementById('edit-id').value;
+  if (id) {
+    Object.assign(buildings.find((x) => x.id === id), data);
+  } else {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const newB = Object.assign(blankBuilding(), data, { id: 'custom-' + slug + '-' + (buildings.length + 1) });
+    buildings.push(newB);
+  }
+  saveState();
+  closeEdit();
+  render();
+  if (id) openDetail(id);
+}
+
+// A building object with all expected keys, so the detail panel never breaks.
+function blankBuilding() {
+  const o = {};
+  Object.keys(LABELS).forEach((k) => (o[k] = ''));
+  Object.assign(o, {
+    notes1b: '', notes1c: '', rentableSfNum: 0, estDaytimePopulationNum: 0,
+    numFloorsNum: 0, leadScoreNum: 0, softCriteriaCountNum: 0,
+    txName: '', txTitle: '', txEmail: '', txPhone: '', txEmailStatus: '', txLinkedinUrl: '', txSource: '',
+    gmName: '', gmTitle: '', gmEmail: '', gmPhone: '', gmEmailStatus: '', gmLinkedinUrl: '', gmSource: '',
+    opsName: '', opsTitle: '', opsEmail: '', opsPhone: '', opsEmailStatus: '', opsLinkedinUrl: '', opsSource: '',
+    outreachStatus: 'Not Contacted', popUpLobbyViability: 'acceptable', wave: '',
+  });
+  return o;
+}
+
+/* ===================== Confirm dialog ============================ */
+
+let confirmCb = null;
+function askConfirm(message, cb) {
+  document.getElementById('confirm-msg').textContent = message;
+  document.getElementById('confirm-overlay').hidden = false;
+  confirmCb = cb;
+}
+function closeConfirm() { document.getElementById('confirm-overlay').hidden = true; confirmCb = null; }
+
+/* ===================== Wire-up =================================== */
 
 function init() {
-  populateStaticSelects();
   loadState();
-
-  document.getElementById('building-form').addEventListener('submit', handleSubmit);
-  document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
-
-  document.getElementById('filter').addEventListener('change', (e) => {
-    currentFilter = e.target.value;
-    renderList(); // only the list depends on the filter
-  });
-
-  document.getElementById('reset-btn').addEventListener('click', () => {
-    if (buildings.length === 0) return;
-    if (confirm('Reset all leads? This permanently clears the list.')) {
-      resetState();
-      currentFilter = 'All';
-      document.getElementById('filter').value = 'All';
-      resetForm();
-      render();
-    }
-  });
-
+  populateFilters();
   render();
+
+  // Search
+  document.getElementById('search').addEventListener('input', (e) => { view.search = e.target.value; renderTable(applyView()); });
+
+  // Filters
+  document.getElementById('filter-stage').addEventListener('change', (e) => { view.stage = e.target.value; renderTable(applyView()); });
+  document.getElementById('filter-submarket').addEventListener('change', (e) => { view.submarket = e.target.value; renderTable(applyView()); });
+  document.getElementById('filter-viability').addEventListener('change', (e) => { view.viability = e.target.value; renderTable(applyView()); });
+  document.getElementById('filter-wave').addEventListener('change', (e) => { view.wave = e.target.value; renderTable(applyView()); });
+  document.getElementById('filter-magmile').addEventListener('change', (e) => { view.magMile = e.target.checked; renderTable(applyView()); });
+  document.getElementById('sort').addEventListener('change', (e) => { view.sort = e.target.value; renderTable(applyView()); });
+
+  document.getElementById('clear-filters').addEventListener('click', () => {
+    Object.assign(view, { stage: 'All', submarket: 'All', viability: 'All', wave: 'All', magMile: false, search: '' });
+    document.getElementById('filter-stage').value = 'All';
+    document.getElementById('filter-submarket').value = 'All';
+    document.getElementById('filter-viability').value = 'All';
+    document.getElementById('filter-wave').value = 'All';
+    document.getElementById('filter-magmile').checked = false;
+    document.getElementById('search').value = '';
+    renderTable(applyView());
+  });
+
+  // Detail panel
+  document.getElementById('detail-close').addEventListener('click', closeDetail);
+  document.getElementById('panel-overlay').addEventListener('click', closeDetail);
+  document.getElementById('detail-stage').addEventListener('change', (e) => {
+    if (selectedId) { setStage(selectedId, e.target.value); render(); }
+  });
+  document.getElementById('detail-edit').addEventListener('click', () => { if (selectedId) openEdit(selectedId); });
+  document.getElementById('detail-delete').addEventListener('click', () => {
+    if (!selectedId) return;
+    const b = buildings.find((x) => x.id === selectedId);
+    askConfirm('Delete “' + (b ? b.buildingName : 'this building') + '” from the pipeline?', () => {
+      deleteBuilding(selectedId); closeDetail(); render();
+    });
+  });
+
+  // Add / edit modal
+  document.getElementById('add-btn').addEventListener('click', () => openEdit(null));
+  document.getElementById('modal-close').addEventListener('click', closeEdit);
+  document.getElementById('modal-cancel').addEventListener('click', closeEdit);
+  document.getElementById('edit-form').addEventListener('submit', submitEdit);
+
+  // Reset
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    askConfirm('Reset all leads to the original 88-building dataset? This discards your changes.', () => {
+      resetToOriginal();
+      Object.assign(view, { stage: 'All', submarket: 'All', viability: 'All', wave: 'All', magMile: false, search: '', sort: 'score-desc' });
+      ['filter-stage', 'filter-submarket', 'filter-viability', 'filter-wave'].forEach((id) => (document.getElementById(id).value = 'All'));
+      document.getElementById('filter-magmile').checked = false;
+      document.getElementById('search').value = '';
+      document.getElementById('sort').value = 'score-desc';
+      closeDetail();
+      render();
+    });
+  });
+
+  // Confirm dialog
+  document.getElementById('confirm-yes').addEventListener('click', () => { const cb = confirmCb; closeConfirm(); if (cb) cb(); });
+  document.getElementById('confirm-no').addEventListener('click', closeConfirm);
+
+  // Escape closes panels/modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!document.getElementById('confirm-overlay').hidden) closeConfirm();
+    else if (!document.getElementById('modal-overlay').hidden) closeEdit();
+    else if (document.getElementById('detail-panel').classList.contains('open')) closeDetail();
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

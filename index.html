@@ -3,105 +3,204 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Popup Bagels — Lead Manager</title>
+  <title>PopUp Bagels — Lead Manager (CRM)</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrap">
-      <h1>🥯 Popup Bagels <span>Lead Manager</span></h1>
-      <p class="tagline">Tall-building outreach pipeline for the Chicago pop-up crew.</p>
+
+  <!-- ============ TOP NAV ============ -->
+  <header class="topnav">
+    <div class="brand">
+      <span class="brand-mark">🥯</span>
+      <span class="brand-name">PopUp&nbsp;Bagels <em>Lead Manager</em></span>
+    </div>
+    <div class="topnav-tools">
+      <div class="search">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input type="search" id="search" placeholder="Search buildings…" aria-label="Search buildings by name" />
+      </div>
+      <button type="button" id="add-btn" class="btn primary">+ Add building</button>
+      <button type="button" id="reset-btn" class="btn ghost">Reset data</button>
     </div>
   </header>
 
-  <main class="wrap">
+  <!-- ============ STAT BAR ============ -->
+  <section class="statbar" id="statbar" aria-label="Pipeline statistics"></section>
 
-    <!-- 1. PIPELINE SUMMARY ------------------------------------------------ -->
-    <section id="summary-section" aria-labelledby="summary-heading">
-      <h2 id="summary-heading">Pipeline summary</h2>
-      <!-- Cards rebuilt from derived state on every change -->
-      <div id="summary-cards" class="summary-cards"></div>
-    </section>
+  <!-- ============ MAIN ============ -->
+  <div class="layout">
 
-    <!-- 2. FOLLOW-UP QUEUE ------------------------------------------------- -->
-    <section id="followup-section" aria-labelledby="followup-heading">
-      <h2 id="followup-heading">
-        Follow-up queue
-        <span class="hint">Reached Out, but quiet for 7+ days</span>
-      </h2>
-      <div id="followup-list" class="followup-list"></div>
-    </section>
+    <!-- Left filter rail -->
+    <aside class="rail" id="rail" aria-label="Filters">
+      <div class="rail-head">
+        <h2>Filters</h2>
+        <button type="button" id="clear-filters" class="link-btn">Clear all</button>
+      </div>
 
-    <!-- 3. ADD / EDIT FORM ------------------------------------------------- -->
-    <section id="form-section" aria-labelledby="form-heading">
-      <h2 id="form-heading">Add a building</h2>
-      <form id="building-form" novalidate>
-        <!-- Hidden id: empty = adding, populated = editing an existing lead -->
-        <input type="hidden" id="building-id" value="" />
+      <label class="rail-field">
+        <span>Outreach stage</span>
+        <select id="filter-stage"></select>
+      </label>
 
-        <div class="field">
-          <label for="name">Building name</label>
-          <input type="text" id="name" name="name" placeholder="e.g. Willis Tower" />
-          <p class="error" id="name-error"></p>
+      <label class="rail-field">
+        <span>Submarket</span>
+        <select id="filter-submarket"></select>
+      </label>
+
+      <label class="rail-field">
+        <span>Pop-Up Viability</span>
+        <select id="filter-viability"></select>
+      </label>
+
+      <label class="rail-field">
+        <span>Outreach Wave</span>
+        <select id="filter-wave"></select>
+      </label>
+
+      <label class="rail-check">
+        <input type="checkbox" id="filter-magmile" />
+        <span>Magnificent Mile cohort only</span>
+      </label>
+
+      <hr />
+
+      <label class="rail-field">
+        <span>Sort by</span>
+        <select id="sort">
+          <option value="score-desc">Lead Score (high → low)</option>
+          <option value="pop-desc">Daytime Population (high → low)</option>
+          <option value="name-asc">Building Name (A → Z)</option>
+        </select>
+      </label>
+    </aside>
+
+    <!-- Lead table -->
+    <main class="content">
+      <div class="content-head">
+        <h2 id="result-count">Buildings</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="leads" id="leads-table">
+          <thead>
+            <tr>
+              <th class="th-name">Building</th>
+              <th>Submarket</th>
+              <th>Class</th>
+              <th class="th-num">Lead Score</th>
+              <th>Viability</th>
+              <th class="th-stage">Outreach Stage</th>
+            </tr>
+          </thead>
+          <tbody id="leads-body"></tbody>
+        </table>
+        <div id="empty-state" class="empty" hidden></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============ DETAIL SLIDE-IN PANEL ============ -->
+  <div class="panel-overlay" id="panel-overlay" hidden></div>
+  <aside class="detail-panel" id="detail-panel" aria-hidden="true" aria-label="Building detail">
+    <div class="detail-head">
+      <div>
+        <h2 id="detail-title">—</h2>
+        <p id="detail-sub" class="detail-sub"></p>
+      </div>
+      <button type="button" id="detail-close" class="icon-btn" aria-label="Close panel">✕</button>
+    </div>
+    <div class="detail-actions">
+      <label class="inline-field">
+        <span>Stage</span>
+        <select id="detail-stage"></select>
+      </label>
+      <button type="button" id="detail-edit" class="btn ghost small">Edit</button>
+      <button type="button" id="detail-delete" class="btn danger small">Delete</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </aside>
+
+  <!-- ============ EDIT / ADD MODAL ============ -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 id="modal-title">Edit building</h2>
+        <button type="button" id="modal-close" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <form id="edit-form" novalidate>
+        <input type="hidden" id="edit-id" />
+        <div class="form-grid">
+          <label class="ff">
+            <span>Building Name</span>
+            <input type="text" id="edit-name" />
+            <em class="err" id="err-name"></em>
+          </label>
+          <label class="ff">
+            <span>Street Address</span>
+            <input type="text" id="edit-address" />
+            <em class="err" id="err-address"></em>
+          </label>
+          <label class="ff">
+            <span>Submarket</span>
+            <input type="text" id="edit-submarket" />
+          </label>
+          <label class="ff">
+            <span>Building Class</span>
+            <input type="text" id="edit-class" />
+          </label>
+          <label class="ff">
+            <span>Number of Floors</span>
+            <input type="number" id="edit-floors" min="1" />
+            <em class="err" id="err-floors"></em>
+          </label>
+          <label class="ff">
+            <span>Lead Score (0–5)</span>
+            <input type="number" id="edit-score" min="0" max="5" />
+            <em class="err" id="err-score"></em>
+          </label>
+          <label class="ff">
+            <span>Pop-Up Viability</span>
+            <select id="edit-viability">
+              <option value="strong">Strong</option>
+              <option value="acceptable">Acceptable</option>
+              <option value="weak">Weak</option>
+              <option value="not_viable">Not Viable</option>
+            </select>
+          </label>
+          <label class="ff">
+            <span>Outreach Stage</span>
+            <select id="edit-stage"></select>
+          </label>
+          <label class="ff wide">
+            <span>Tenant Experience Contact</span>
+            <input type="text" id="edit-tx" placeholder="Name, title" />
+          </label>
+          <label class="ff wide">
+            <span>Notes</span>
+            <textarea id="edit-notes" rows="3"></textarea>
+          </label>
         </div>
-
-        <div class="field">
-          <label for="address">Address</label>
-          <input type="text" id="address" name="address" placeholder="e.g. 233 S Wacker Dr" />
-          <p class="error" id="address-error"></p>
-        </div>
-
-        <div class="row">
-          <div class="field">
-            <label for="floors">Floors</label>
-            <input type="number" id="floors" name="floors" min="1" placeholder="e.g. 110" />
-            <p class="error" id="floors-error"></p>
-          </div>
-
-          <div class="field">
-            <label for="status">Starting status</label>
-            <select id="status" name="status"></select>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="contact">Contact / notes</label>
-          <textarea id="contact" name="contact" rows="2"
-            placeholder="Who we're talking to, or notes about access"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="lastContacted">Last contacted</label>
-          <input type="date" id="lastContacted" name="lastContacted" />
-          <p class="hint">Used to flag stale follow-ups. Leave blank if never contacted.</p>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" id="submit-btn" class="btn primary">Add building</button>
-          <button type="button" id="cancel-edit-btn" class="btn ghost" hidden>Cancel edit</button>
+        <div class="modal-foot">
+          <button type="button" id="modal-cancel" class="btn ghost">Cancel</button>
+          <button type="submit" class="btn primary">Save</button>
         </div>
       </form>
-    </section>
+    </div>
+  </div>
 
-    <!-- 4. LEAD LIST ------------------------------------------------------- -->
-    <section id="list-section" aria-labelledby="list-heading">
-      <div class="list-header">
-        <h2 id="list-heading">Leads</h2>
-        <div class="list-controls">
-          <label for="filter" class="filter-label">Filter:</label>
-          <select id="filter"></select>
-          <button type="button" id="reset-btn" class="btn danger">Reset all</button>
-        </div>
+  <!-- ============ CONFIRM DIALOG ============ -->
+  <div class="modal-overlay" id="confirm-overlay" hidden>
+    <div class="modal small" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="modal-head"><h2 id="confirm-title">Are you sure?</h2></div>
+      <p id="confirm-msg" class="confirm-msg"></p>
+      <div class="modal-foot">
+        <button type="button" id="confirm-no" class="btn ghost">Cancel</button>
+        <button type="button" id="confirm-yes" class="btn danger">Confirm</button>
       </div>
-      <div id="lead-list" class="lead-list"></div>
-    </section>
+    </div>
+  </div>
 
-  </main>
-
-  <footer class="site-footer">
-    <p class="wrap">Static demo · data lives in your browser (localStorage) · no server, no tracking.</p>
-  </footer>
-
+  <!-- Data first (defines window.POPUP_BAGELS_DATA), then app logic. -->
+  <script src="data.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
