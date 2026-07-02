@@ -17,23 +17,33 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
 
   // Invite/recovery emails land here with a token in the URL (middleware bounces
-  // cookieless requests to /login). The browser client exchanges it on creation;
-  // once the session exists, send the new user to set their password.
+  // cookieless requests to /login). Two formats exist and both must be handled:
+  // implicit-flow hash tokens (#access_token=..., what dashboard invites send)
+  // and PKCE codes (?code=..., which the client exchanges automatically).
   useEffect(() => {
-    const url = window.location.href;
-    if (!url.includes("code=") && !url.includes("access_token")) return;
     const sb = supabase();
-    const check = () =>
-      sb.auth.getSession().then(({ data }) => {
-        if (data.session) {
-          router.replace("/set-password");
-          return true;
-        }
-        return false;
+    const toSetPassword = () => {
+      router.replace("/set-password");
+      router.refresh();
+    };
+
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const access_token = hash.get("access_token");
+    const refresh_token = hash.get("refresh_token");
+    if (access_token && refresh_token) {
+      sb.auth.setSession({ access_token, refresh_token }).then(({ error }) => {
+        if (!error) toSetPassword();
+        else setError("This invite link is invalid or expired. Ask your admin for a new one.");
       });
-    check();
+      return;
+    }
+
+    if (!window.location.search.includes("code=")) return;
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) toSetPassword();
+    });
     const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
-      if (session) router.replace("/set-password");
+      if (session) toSetPassword();
     });
     return () => sub.subscription.unsubscribe();
   }, [router]);
