@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --color-brand-50: #fff8eb;
+  --color-brand-100: #ffedc7;
+  --color-brand-200: #fdd98a;
+  --color-brand-300: #fbbf4d;
+  --color-brand-400: #f9a825;
+  --color-brand-500: #f28c0f;
+  --color-brand-600: #d76a06;
+  --color-brand-700: #b24a09;
+  --color-brand-800: #90390e;
+  --color-brand-900: #772f0f;
+  --color-ink-950: #16130e;
+  --color-ink-900: #221d15;
+  --color-ink-800: #2f2820;
+}
+
+body {
+  @apply bg-stone-100 text-stone-900 antialiased;
+}

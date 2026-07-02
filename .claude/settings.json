@@ -1,0 +1,20 @@
+{
+    "permissions": {
+      "defaultMode": "acceptEdits",
+      "allow": [
+        "Bash",
+        "Edit",
+        "Write",
+        "Read"
+      ],
+      "deny": [
+        "Bash(rm:*)",
+        "Bash(curl:*)",
+        "Bash(wget:*)",
+        "Bash(yarn:*)",
+        "Bash(pnpm:*)",
+        "Read(./.env)",
+        "Read(./.env.*)"
+      ]
+    }
+  }
