@@ -23,10 +23,14 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refreshes the session cookie if expired; tells us whether a user exists.
+  // Local cookie check only: no network round trip to Supabase per request
+  // (getSession still refreshes the token over the network when it's expired).
+  // This gate only decides the login redirect; data access is enforced by RLS,
+  // so a forged cookie gets an empty shell, never data.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   const isLogin = request.nextUrl.pathname.startsWith("/login");
   if (!user && !isLogin) {
