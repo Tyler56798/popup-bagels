@@ -27,6 +27,10 @@ export const viewport: Viewport = {
   // legacy viewport and zooms pages to their content width.
   width: "device-width",
   initialScale: 1,
+  // Pinch-zoom disabled: this runs as an installed app and zooming breaks
+  // the fixed chrome (header/tab bar) illusion.
+  maximumScale: 1,
+  userScalable: false,
   // Matches the chrome gray so the iOS/Android status bar blends with the app.
   themeColor: "#f6f7fb",
   viewportFit: "cover",

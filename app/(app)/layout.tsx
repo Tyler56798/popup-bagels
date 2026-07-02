@@ -69,7 +69,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
       </aside>
 
-      <div className="flex min-h-screen flex-1 flex-col lg:ml-60">
+      {/* min-w-0 stops wide children (tables, board) from stretching the page
+          past the viewport; they scroll inside their own containers instead. */}
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col lg:ml-60">
         <header
           className="sticky top-0 z-30 border-b border-[#e6e9f2] bg-chrome lg:bg-white"
           style={{ paddingTop: "env(safe-area-inset-top)" }}
