@@ -31,9 +31,13 @@ export default function LoginPage() {
     const access_token = hash.get("access_token");
     const refresh_token = hash.get("refresh_token");
     if (access_token && refresh_token) {
-      sb.auth.setSession({ access_token, refresh_token }).then(({ error }) => {
-        if (!error) toSetPassword();
-        else setError("This invite link is invalid or expired. Ask your admin for a new one.");
+      sb.auth.setSession({ access_token, refresh_token }).then(async ({ data, error }) => {
+        if (!error && data.session) toSetPassword();
+        else {
+          // setSession can persist cookies before rejecting; wipe any residue.
+          await sb.auth.signOut();
+          setError("This invite link is invalid or expired. Ask your admin for a new one.");
+        }
       });
       return;
     }
