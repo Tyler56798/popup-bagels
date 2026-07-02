@@ -22,7 +22,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#6161ff",
+  // Matches the chrome gray so the iOS/Android status bar blends with the app.
+  themeColor: "#f6f7fb",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -70,23 +70,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col lg:ml-60">
-        <header className="sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-[#e6e9f2] bg-white px-4 lg:px-6">
-          {/* Mobile brand (sidebar is hidden) */}
-          <div className="flex items-center gap-2 lg:hidden">
-            <BagelMark size={24} />
-            <span className="text-sm font-semibold text-[#323338]">PopUp Bagels</span>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <span className="hidden text-xs text-[#676879] sm:inline">{email ?? ""}</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-semibold text-white">
-              {(email ?? "?").slice(0, 1).toUpperCase()}
-            </span>
-            <button
-              onClick={signOut}
-              className="rounded border border-[#d0d4e4] px-2.5 py-1 text-xs font-medium text-[#323338] transition hover:bg-chrome"
-            >
-              Sign out
-            </button>
+        <header
+          className="sticky top-0 z-30 border-b border-[#e6e9f2] bg-chrome lg:bg-white"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
+          <div className="flex h-12 items-center gap-3 px-4 lg:px-6">
+            {/* Mobile brand (sidebar is hidden) */}
+            <div className="flex items-center gap-2 lg:hidden">
+              <BagelMark size={24} />
+              <span className="text-sm font-semibold text-[#323338]">PopUp Bagels</span>
+            </div>
+            <div className="ml-auto flex items-center gap-3">
+              <span className="hidden text-xs text-[#676879] sm:inline">{email ?? ""}</span>
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-semibold text-white">
+                {(email ?? "?").slice(0, 1).toUpperCase()}
+              </span>
+              <button
+                onClick={signOut}
+                className="rounded border border-[#d0d4e4] px-2.5 py-1 text-xs font-medium text-[#323338] transition hover:bg-chrome lg:hover:bg-chrome"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </header>
 
