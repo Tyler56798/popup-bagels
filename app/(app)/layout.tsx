@@ -27,6 +27,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       .then(({ data }) => setEmail(data.user?.email ?? null));
   }, []);
 
+  // Land every navigation at the absolute top; Next's default scroll leaves
+  // the page title tucked under the sticky header.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   async function signOut() {
     await supabase().auth.signOut();
     router.push("/login");
