@@ -46,33 +46,33 @@ export default function TemplatesPage() {
       >
         <button
           onClick={() => setEditing("new")}
-          className="rounded-lg bg-brand-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
+          className="rounded bg-primary-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary-600"
         >
           + New template
         </button>
       </PageHeader>
 
-      <p className="mb-4 text-xs text-stone-500">
+      <p className="mb-4 text-xs text-slate-500">
         Available fields:{" "}
         {MERGE_FIELDS.map((f) => (
-          <code key={f} className="mr-1.5 rounded bg-stone-200/70 px-1.5 py-0.5">
+          <code key={f} className="mr-1.5 rounded bg-slate-200/70 px-1.5 py-0.5">
             {f}
           </code>
         ))}
       </p>
 
       {templates.length === 0 ? (
-        <p className="rounded-xl border border-stone-200 bg-white py-12 text-center text-sm text-stone-400">
-          No templates yet — run the seed script or create one.
+        <p className="rounded-lg border border-slate-200 bg-white py-12 text-center text-sm text-slate-400">
+          No templates yet. Run the seed script or create one.
         </p>
       ) : (
         <div className="space-y-4">
           {templates.map((t) => (
-            <section key={t.id} className="rounded-xl border border-stone-200 bg-white p-5">
+            <section key={t.id} className="rounded-lg border border-slate-200 bg-white p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="font-semibold">{t.name}</h2>
-                  <p className="mt-1 text-sm text-stone-600">
+                  <p className="mt-1 text-sm text-slate-600">
                     <span className="font-medium">Subject:</span>{" "}
                     {sample ? mergeTemplate(t.subject, sample, null, "You") : t.subject}
                   </p>
@@ -80,23 +80,23 @@ export default function TemplatesPage() {
                 <div className="flex shrink-0 gap-2">
                   <button
                     onClick={() => setEditing(t)}
-                    className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm font-medium transition hover:bg-stone-50"
+                    className="rounded border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-50"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => setDeleting(t)}
-                    className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                    className="rounded border border-[#f0c2ca] px-3 py-1.5 text-sm font-medium text-status-red transition hover:bg-[#fdf1f3]"
                   >
                     Delete
                   </button>
                 </div>
               </div>
               <details className="mt-3">
-                <summary className="cursor-pointer text-xs font-medium text-brand-600">
+                <summary className="cursor-pointer text-xs font-medium text-primary-600">
                   Preview{sample ? ` (filled with ${sample.name})` : ""}
                 </summary>
-                <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-stone-50 p-4 font-sans text-sm text-stone-700">
+                <pre className="mt-2 whitespace-pre-wrap rounded bg-slate-50 p-4 font-sans text-sm text-slate-700">
                   {sample ? mergeTemplate(t.body, sample, null, "You") : t.body}
                 </pre>
               </details>
@@ -166,21 +166,21 @@ function TemplateFormModal({
   }
 
   const input =
-    "w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none";
+    "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <Modal title={template ? "Edit template" : "New template"} onClose={onClose} wide>
       <form onSubmit={save} className="space-y-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-stone-700">Template name</span>
+          <span className="mb-1 block text-sm font-medium text-slate-700">Template name</span>
           <input className={input} value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-stone-700">Subject</span>
+          <span className="mb-1 block text-sm font-medium text-slate-700">Subject</span>
           <input className={input} value={subject} onChange={(e) => setSubject(e.target.value)} />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-stone-700">Body</span>
+          <span className="mb-1 block text-sm font-medium text-slate-700">Body</span>
           <textarea
             className={`${input} font-mono`}
             rows={14}
@@ -188,19 +188,19 @@ function TemplateFormModal({
             onChange={(e) => setBody(e.target.value)}
           />
         </label>
-        {error && <p className="text-sm text-rose-600">{error}</p>}
+        {error && <p className="text-sm text-status-red">{error}</p>}
         <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium transition hover:bg-stone-50"
+            className="rounded border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={busy}
-            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
+            className="rounded bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:opacity-50"
           >
             {busy ? "Saving…" : "Save template"}
           </button>

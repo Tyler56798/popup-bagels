@@ -25,7 +25,7 @@ const buildings = window.POPUP_BAGELS_DATA;
 const outPath = path.join(root, "data", "geocoded.json");
 const existing = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : {};
 
-const UA = "popup-bagels-lead-manager/1.0 (tylerkhummel@gmail.com)";
+const UA = "popup-bagels-lead-manager/1.0 (contact: admin)";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function lookup(query) {

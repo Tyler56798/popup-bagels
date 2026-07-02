@@ -10,16 +10,12 @@ import {
   Map,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { STAGE_LABELS, type Building, type Stage } from "@/lib/types";
+import { STAGE_LABELS, type Building } from "@/lib/types";
 import { fmtNumber } from "@/lib/format";
+import { STAGE_HEX } from "@/lib/stageStyles";
+import { Icon } from "@/components/icons";
 
-export const STAGE_HEX: Record<Stage, string> = {
-  not_contacted: "#78716c",
-  reached_out: "#0284c7",
-  followed_up: "#7c3aed",
-  booked: "#059669",
-  declined: "#e11d48",
-};
+const PRIMARY = "#6161ff";
 
 const CHICAGO_CENTER = { lat: 41.8832, lng: -87.6324 };
 
@@ -28,6 +24,8 @@ interface Props {
   planMode: boolean;
   route: Building[];
   onTogglePlanStop: (b: Building) => void;
+  onLogVisit: (b: Building) => void;
+  loggedIds: Set<string>;
 }
 
 /** Dashed walking-route line — imperative because the library has no Polyline component. */
@@ -49,7 +47,7 @@ function RouteLine({ route }: { route: Building[] }) {
       strokeOpacity: 0,
       icons: [
         {
-          icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeWeight: 3, strokeColor: "#f28c0f" },
+          icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeWeight: 3, strokeColor: PRIMARY },
           offset: "0",
           repeat: "14px",
         },
@@ -61,21 +59,30 @@ function RouteLine({ route }: { route: Building[] }) {
   return null;
 }
 
-export default function MapView({ buildings, planMode, route, onTogglePlanStop }: Props) {
+export default function MapView({
+  buildings,
+  planMode,
+  route,
+  onTogglePlanStop,
+  onLogVisit,
+  loggedIds,
+}: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey) {
     return (
-      <div className="flex h-full items-center justify-center bg-stone-50 p-8">
-        <div className="max-w-md text-center text-sm text-stone-600">
-          <div className="text-3xl">🗺️</div>
-          <h2 className="mt-2 font-semibold text-stone-800">Google Maps key needed</h2>
+      <div className="flex h-full items-center justify-center bg-slate-50 p-8">
+        <div className="max-w-md text-center text-sm text-slate-600">
+          <div className="flex justify-center text-slate-400">
+            <Icon name="pin" size={32} />
+          </div>
+          <h2 className="mt-2 font-semibold text-slate-800">Google Maps key needed</h2>
           <p className="mt-2">
-            Add <code className="rounded bg-stone-200 px-1 py-0.5 text-xs">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>{" "}
-            to <code className="rounded bg-stone-200 px-1 py-0.5 text-xs">.env.local</code> and reload.
-            Create the key at console.cloud.google.com → APIs &amp; Services → Credentials, with the
-            “Maps JavaScript API” enabled.
+            Add <code className="rounded bg-slate-200 px-1 py-0.5 text-xs">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>{" "}
+            to <code className="rounded bg-slate-200 px-1 py-0.5 text-xs">.env.local</code> and reload.
+            Create the key at console.cloud.google.com under APIs &amp; Services, Credentials, with
+            the &quot;Maps JavaScript API&quot; enabled.
           </p>
         </div>
       </div>
@@ -91,7 +98,7 @@ export default function MapView({ buildings, planMode, route, onTogglePlanStop }
       <Map
         defaultCenter={CHICAGO_CENTER}
         defaultZoom={14}
-        mapId="POPUP_BAGELS_CRM" /* any ID enables Advanced Markers; make a styled one in the console later if wanted */
+        mapId="DEMO_MAP_ID" /* Google's placeholder ID enables Advanced Markers; make a styled one in the console later if wanted */
         gestureHandling="greedy"
         clickableIcons={false}
         className="h-full w-full"
@@ -119,7 +126,7 @@ export default function MapView({ buildings, planMode, route, onTogglePlanStop }
                   width: d,
                   height: d,
                   background: STAGE_HEX[b.stage],
-                  border: selected ? "3px solid #f28c0f" : "2px solid #ffffff",
+                  border: selected ? `3px solid ${PRIMARY}` : "2px solid #ffffff",
                 }}
               >
                 {selected ? stopIdx! + 1 : ""}
@@ -136,22 +143,37 @@ export default function MapView({ buildings, planMode, route, onTogglePlanStop }
             headerContent={<span className="font-semibold">{open.name}</span>}
           >
             <div className="min-w-44 text-[13px]">
-              <div className="text-xs text-stone-500">{open.street_address}</div>
-              <div className="mt-1 text-xs">
+              <div className="text-xs text-slate-500">{open.street_address}</div>
+              <div className="mt-1 flex items-center gap-1.5 text-xs">
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ background: STAGE_HEX[open.stage] }}
+                />
                 <span style={{ color: STAGE_HEX[open.stage] }} className="font-medium">
-                  ● {STAGE_LABELS[open.stage]}
+                  {STAGE_LABELS[open.stage]}
                 </span>
                 {" · "}
                 {fmtNumber(open.est_daytime_pop)} daytime pop.
               </div>
               <div className="mt-2 flex items-center gap-3 text-xs">
-                <Link href={`/buildings/${open.id}`} className="font-medium text-brand-600">
-                  Open →
+                <Link
+                  href={`/buildings/${open.id}`}
+                  className="flex items-center gap-1 font-medium text-primary-600"
+                >
+                  Open
+                  <Icon name="arrow-right" size={11} />
                 </Link>
+                <button
+                  onClick={() => onLogVisit(open)}
+                  disabled={loggedIds.has(open.id)}
+                  className="font-medium text-status-green disabled:opacity-60"
+                >
+                  {loggedIds.has(open.id) ? "Visit logged" : "Log visit"}
+                </button>
                 {planMode && (
                   <button
                     onClick={() => onTogglePlanStop(open)}
-                    className="font-medium text-brand-600"
+                    className="font-medium text-primary-600"
                   >
                     {openStopIdx !== undefined
                       ? `Remove (stop ${openStopIdx + 1})`

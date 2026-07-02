@@ -5,14 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { STAGES, STAGE_LABELS, type Building, type Stage } from "@/lib/types";
 import { daysSince } from "@/lib/format";
 import { BuildingLink, PageHeader, ScoreDots, Spinner } from "@/components/ui";
-
-const COLUMN_TINT: Record<Stage, string> = {
-  not_contacted: "border-t-stone-400",
-  reached_out: "border-t-sky-400",
-  followed_up: "border-t-violet-400",
-  booked: "border-t-emerald-400",
-  declined: "border-t-rose-400",
-};
+import { STAGE_DOT_BG } from "@/lib/stageStyles";
 
 export default function PipelinePage() {
   const [buildings, setBuildings] = useState<Building[] | null>(null);
@@ -44,9 +37,9 @@ export default function PipelinePage() {
     <div>
       <PageHeader
         title="Pipeline"
-        sub="Drag a building card between stages — changes save instantly and are logged."
+        sub="Drag a building card between stages. Changes save instantly and are logged."
       />
-      <div className="grid grid-cols-5 gap-3">
+      <div className="flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-5 lg:overflow-visible lg:pb-0">
         {STAGES.map((stage) => {
           const cards = buildings
             .filter((b) => b.stage === stage)
@@ -60,17 +53,21 @@ export default function PipelinePage() {
               }}
               onDragLeave={() => setOverStage((s) => (s === stage ? null : s))}
               onDrop={() => drop(stage)}
-              className={`flex min-h-[70vh] flex-col rounded-xl border border-t-4 bg-stone-50 ${COLUMN_TINT[stage]} ${
-                overStage === stage ? "border-brand-400 bg-brand-50/60" : "border-stone-200"
+              className={`flex min-h-[70vh] w-64 shrink-0 flex-col overflow-hidden rounded-lg border lg:w-auto ${
+                overStage === stage
+                  ? "border-primary-400 bg-primary-50"
+                  : "border-[#e6e9f2] bg-chrome"
               }`}
             >
-              <div className="flex items-center justify-between px-3 py-2.5">
-                <h2 className="text-sm font-semibold">{STAGE_LABELS[stage]}</h2>
-                <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-stone-500 ring-1 ring-stone-200">
+              <div
+                className={`flex items-center justify-between px-3 py-2 ${STAGE_DOT_BG[stage]}`}
+              >
+                <h2 className="text-sm font-semibold text-white">{STAGE_LABELS[stage]}</h2>
+                <span className="rounded bg-white/25 px-2 py-0.5 text-xs font-semibold text-white">
                   {cards.length}
                 </span>
               </div>
-              <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2">
+              <div className="flex-1 space-y-2 overflow-y-auto p-2">
                 {cards.map((b) => (
                   <div
                     key={b.id}
@@ -80,12 +77,12 @@ export default function PipelinePage() {
                       setDragId(null);
                       setOverStage(null);
                     }}
-                    className={`cursor-grab rounded-lg border border-stone-200 bg-white p-3 shadow-sm transition active:cursor-grabbing ${
-                      dragId === b.id ? "opacity-40" : "hover:border-brand-300"
+                    className={`cursor-grab rounded border border-slate-200 bg-white p-3 shadow-sm transition active:cursor-grabbing ${
+                      dragId === b.id ? "opacity-40" : "hover:border-primary-300"
                     }`}
                   >
                     <BuildingLink id={b.id} name={b.name} />
-                    <div className="mt-0.5 truncate text-xs text-stone-500">
+                    <div className="mt-0.5 truncate text-xs text-slate-500">
                       {b.submarket ?? "—"}
                     </div>
                     <div className="mt-2 flex items-center justify-between">
@@ -94,8 +91,8 @@ export default function PipelinePage() {
                         <span
                           className={`text-[11px] ${
                             (daysSince(b.last_contacted_at) ?? 99) >= 7
-                              ? "font-medium text-rose-500"
-                              : "text-stone-400"
+                              ? "font-medium text-status-red"
+                              : "text-slate-400"
                           }`}
                         >
                           {b.last_contacted_at
@@ -107,7 +104,7 @@ export default function PipelinePage() {
                   </div>
                 ))}
                 {cards.length === 0 && (
-                  <p className="px-2 py-6 text-center text-xs text-stone-400">Empty</p>
+                  <p className="px-2 py-6 text-center text-xs text-slate-400">Empty</p>
                 )}
               </div>
             </div>

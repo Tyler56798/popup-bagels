@@ -1,22 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --color-brand-50: #fff8eb;
-  --color-brand-100: #ffedc7;
-  --color-brand-200: #fdd98a;
-  --color-brand-300: #fbbf4d;
-  --color-brand-400: #f9a825;
-  --color-brand-500: #f28c0f;
-  --color-brand-600: #d76a06;
-  --color-brand-700: #b24a09;
-  --color-brand-800: #90390e;
-  --color-brand-900: #772f0f;
-  --color-ink-950: #16130e;
-  --color-ink-900: #221d15;
-  --color-ink-800: #2f2820;
+  --font-sans: var(--font-figtree), -apple-system, "Segoe UI", system-ui, sans-serif;
+
+  /* Primary accent (monday-style purple-blue) */
+  --color-primary-50: #f1f1fe;
+  --color-primary-100: #ecedfd;
+  --color-primary-200: #d9dafb;
+  --color-primary-300: #b4b6f8;
+  --color-primary-400: #8b8df4;
+  --color-primary-500: #6161ff;
+  --color-primary-600: #4b4bd6;
+  --color-primary-700: #3d3db2;
+  --color-primary-800: #313189;
+  --color-primary-900: #2a2a6e;
+
+  /* Status vocabulary: solid fills that carry white text at AA contrast */
+  --color-status-gray: #676879;
+  --color-status-blue: #1f76db;
+  --color-status-purple: #7c3aed;
+  --color-status-green: #00854d;
+  --color-status-red: #ca3a52;
+  --color-status-orange: #b45309;
+
+  /* Chrome */
+  --color-chrome: #f6f7fb;
 }
 
 body {
-  @apply bg-stone-100 text-stone-900 antialiased;
+  @apply bg-white text-[#323338] antialiased;
 }

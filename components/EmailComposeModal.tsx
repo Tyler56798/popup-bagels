@@ -60,16 +60,16 @@ export default function EmailComposeModal({ building, contact, onClose, onSent }
   return (
     <Modal title={`Email ${contact.name ?? contact.role}`} onClose={onClose} wide>
       {!contact.email && (
-        <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
-          No email on file for this contact — the draft opens without a recipient.
+        <p className="mb-3 rounded bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
+          No email on file for this contact. The draft opens without a recipient.
         </p>
       )}
       <label className="mb-4 block">
-        <span className="mb-1 block text-sm font-medium text-stone-700">Template</span>
+        <span className="mb-1 block text-sm font-medium text-slate-700">Template</span>
         <select
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}
-          className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         >
           {templates.map((t) => (
             <option key={t.id} value={t.id}>
@@ -80,13 +80,13 @@ export default function EmailComposeModal({ building, contact, onClose, onSent }
       </label>
 
       {template ? (
-        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <div className="text-sm font-semibold">{subject}</div>
-          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm text-stone-700">{body}</pre>
+          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm text-slate-700">{body}</pre>
         </div>
       ) : (
-        <p className="py-6 text-center text-sm text-stone-400">
-          No templates yet — create one on the Templates page.
+        <p className="py-6 text-center text-sm text-slate-400">
+          No templates yet. Create one on the Templates page.
         </p>
       )}
 
@@ -94,14 +94,14 @@ export default function EmailComposeModal({ building, contact, onClose, onSent }
         <button
           onClick={() => openDraft("mailto")}
           disabled={!template}
-          className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium transition hover:bg-stone-50 disabled:opacity-50"
+          className="rounded border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-50 disabled:opacity-50"
         >
           Open in mail app
         </button>
         <button
           onClick={() => openDraft("gmail")}
           disabled={!template}
-          className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
+          className="rounded bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:opacity-50"
         >
           Open in Gmail
         </button>

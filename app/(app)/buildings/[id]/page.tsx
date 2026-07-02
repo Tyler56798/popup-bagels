@@ -30,9 +30,10 @@ import {
 import BuildingFormModal from "@/components/BuildingFormModal";
 import EventFormModal from "@/components/EventFormModal";
 import EmailComposeModal from "@/components/EmailComposeModal";
+import { Icon, type IconName } from "@/components/icons";
 
 const input =
-  "w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none";
+  "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
 export default function BuildingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -110,8 +111,8 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
 
   if (notFound)
     return (
-      <p className="py-16 text-center text-sm text-stone-500">
-        Building not found — it may have been deleted.
+      <p className="py-16 text-center text-sm text-slate-500">
+        Building not found. It may have been deleted.
       </p>
     );
   if (!building) return <Spinner />;
@@ -137,16 +138,16 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{building.name}</h1>
-          <p className="mt-0.5 text-sm text-stone-500">
+          <p className="mt-0.5 text-sm text-slate-500">
             {building.street_address}
             {building.zip ? `, Chicago, IL ${building.zip}` : ""} · {building.submarket ?? "—"}
             {building.mag_mile && (
-              <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-800">
+              <span className="ml-2 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800">
                 Mag Mile
               </span>
             )}
           </p>
-          <div className="mt-2 flex items-center gap-3 text-sm text-stone-600">
+          <div className="mt-2 flex items-center gap-3 text-sm text-slate-600">
             <ScoreDots score={building.lead_score} />
             <ViabilityBadge viability={building.viability} />
             {building.website && (
@@ -154,12 +155,15 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
                 href={building.website}
                 target="_blank"
                 rel="noreferrer"
-                className="text-brand-600 hover:underline"
+                className="text-primary-600 hover:underline"
               >
-                Website ↗
+                <span className="inline-flex items-center gap-1">
+                  Website
+                  <Icon name="external" size={12} />
+                </span>
               </a>
             )}
-            <span className="text-xs text-stone-400">
+            <span className="text-xs text-slate-400">
               Last touch: {building.last_contacted_at ? fmtDateTime(building.last_contacted_at) : "never"}
             </span>
           </div>
@@ -168,13 +172,13 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
           <StageSelect value={building.stage} onChange={changeStage} />
           <button
             onClick={() => setShowEdit(true)}
-            className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium transition hover:bg-stone-50"
+            className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium transition hover:bg-slate-50"
           >
             Edit
           </button>
           <button
             onClick={() => setShowDelete(true)}
-            className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+            className="rounded border border-[#f0c2ca] bg-white px-3 py-1.5 text-sm font-medium text-status-red transition hover:bg-[#fdf1f3]"
           >
             Delete
           </button>
@@ -184,92 +188,108 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left column: building intel */}
         <div className="space-y-6 lg:col-span-1">
-          <section className="rounded-xl border border-stone-200 bg-white p-5">
+          <section className="rounded-lg border border-slate-200 bg-white p-5">
             <h2 className="mb-3 font-semibold">Building intel</h2>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
               {facts.map(([k, v]) => (
                 <div key={k}>
-                  <dt className="text-xs text-stone-400">{k}</dt>
-                  <dd className="text-stone-800">{v}</dd>
+                  <dt className="text-xs text-slate-400">{k}</dt>
+                  <dd className="text-slate-800">{v}</dd>
                 </div>
               ))}
             </dl>
             {building.viability_rationale && (
-              <div className="mt-4 rounded-lg bg-stone-50 p-3 text-xs text-stone-600">
-                <span className="font-medium text-stone-700">Why this viability: </span>
+              <div className="mt-4 rounded bg-slate-50 p-3 text-xs text-slate-600">
+                <span className="font-medium text-slate-700">Why this viability: </span>
                 {building.viability_rationale}
               </div>
             )}
             {building.lobby_activation_history && (
-              <div className="mt-2 rounded-lg bg-stone-50 p-3 text-xs text-stone-600">
-                <span className="font-medium text-stone-700">Activation history: </span>
+              <div className="mt-2 rounded bg-slate-50 p-3 text-xs text-slate-600">
+                <span className="font-medium text-slate-700">Activation history: </span>
                 {building.lobby_activation_history}
               </div>
             )}
             {building.anchor_tenants && (
-              <div className="mt-2 rounded-lg bg-stone-50 p-3 text-xs text-stone-600">
-                <span className="font-medium text-stone-700">Anchor tenants: </span>
+              <div className="mt-2 rounded bg-slate-50 p-3 text-xs text-slate-600">
+                <span className="font-medium text-slate-700">Anchor tenants: </span>
                 {building.anchor_tenants}
               </div>
             )}
             {building.notes && (
-              <div className="mt-2 whitespace-pre-wrap rounded-lg bg-brand-50 p-3 text-xs text-stone-700 ring-1 ring-brand-100">
+              <div className="mt-2 whitespace-pre-wrap rounded bg-primary-50 p-3 text-xs text-slate-700 ring-1 ring-primary-100">
                 {building.notes}
               </div>
             )}
           </section>
 
           {/* Contacts */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5">
+          <section className="rounded-lg border border-slate-200 bg-white p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-semibold">Contacts</h2>
               <button
                 onClick={() => setEditContact("new")}
-                className="text-sm font-medium text-brand-600 hover:underline"
+                className="text-sm font-medium text-primary-600 hover:underline"
               >
                 + Add
               </button>
             </div>
             {contacts.length === 0 ? (
-              <p className="py-4 text-center text-sm text-stone-400">No contacts yet.</p>
+              <p className="py-4 text-center text-sm text-slate-400">No contacts yet.</p>
             ) : (
               <ul className="space-y-3">
                 {contacts.map((c) => (
-                  <li key={c.id} className="rounded-lg border border-stone-100 p-3">
+                  <li key={c.id} className="rounded border border-slate-100 p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="text-sm font-medium">
-                          {c.name ?? <span className="text-stone-400">Name unknown</span>}
+                          {c.name ?? <span className="text-slate-400">Name unknown</span>}
                           {c.is_primary && (
-                            <span className="ml-2 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-brand-800">
+                            <span className="ml-2 rounded-full bg-primary-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary-800">
                               Primary
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-stone-500">
+                        <div className="text-xs text-slate-500">
                           {CONTACT_ROLE_LABELS[c.role]}
                           {c.title ? ` · ${c.title}` : ""}
                         </div>
-                        <div className="mt-1 space-y-0.5 text-xs text-stone-600">
+                        <div className="mt-1 space-y-0.5 text-xs text-slate-600">
                           {c.email && (
-                            <div>
-                              ✉️ {c.email}
+                            <div className="flex items-center gap-1.5">
+                              <Icon name="mail" size={12} className="text-slate-400" />
+                              <a href={`mailto:${c.email}`} className="text-primary-600 hover:underline">
+                                {c.email}
+                              </a>
                               {c.email_status && c.email_status !== "verified" && (
-                                <span className="ml-1 text-[10px] text-amber-600">
+                                <span className="ml-1 text-[10px] text-status-orange">
                                   ({c.email_status.replace(/_/g, " ")})
                                 </span>
                               )}
                             </div>
                           )}
-                          {c.phone && <div>📞 {c.phone}</div>}
+                          {c.phone && (
+                            <div className="flex items-center gap-1.5">
+                              <Icon name="phone" size={12} className="text-slate-400" />
+                              <a
+                                href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
+                                className="text-primary-600 hover:underline"
+                              >
+                                {c.phone}
+                              </a>
+                            </div>
+                          )}
                           {c.linkedin_url && (
                             <a
                               href={c.linkedin_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-brand-600 hover:underline"
+                              className="text-primary-600 hover:underline"
                             >
-                              LinkedIn ↗
+                              <span className="inline-flex items-center gap-1">
+                                LinkedIn
+                                <Icon name="external" size={11} />
+                              </span>
                             </a>
                           )}
                         </div>
@@ -277,13 +297,13 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <button
                           onClick={() => setEmailContact(c)}
-                          className="rounded-lg bg-brand-500 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-brand-600"
+                          className="rounded bg-primary-500 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-primary-600"
                         >
                           Email
                         </button>
                         <button
                           onClick={() => setEditContact(c)}
-                          className="text-xs text-stone-400 hover:text-stone-700"
+                          className="text-xs text-slate-400 hover:text-slate-700"
                         >
                           edit
                         </button>
@@ -311,26 +331,26 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
           <TaskSection tasks={tasks} setTasks={setTasks} buildingId={id} />
 
           {/* Events */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5">
+          <section className="rounded-lg border border-slate-200 bg-white p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-semibold">Pop-up events</h2>
               <button
                 onClick={() => setEventModal("new")}
-                className="text-sm font-medium text-brand-600 hover:underline"
+                className="text-sm font-medium text-primary-600 hover:underline"
               >
                 + Schedule
               </button>
             </div>
             {events.length === 0 ? (
-              <p className="py-4 text-center text-sm text-stone-400">
+              <p className="py-4 text-center text-sm text-slate-400">
                 No pop-ups scheduled here yet.
               </p>
             ) : (
-              <ul className="divide-y divide-stone-100">
+              <ul className="divide-y divide-slate-100">
                 {events.map((ev) => (
                   <li
                     key={ev.id}
-                    className="flex cursor-pointer items-center justify-between gap-3 py-3 transition hover:bg-stone-50"
+                    className="flex cursor-pointer items-center justify-between gap-3 py-3 transition hover:bg-slate-50"
                     onClick={() => setEventModal(ev)}
                   >
                     <div>
@@ -338,10 +358,10 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
                         {fmtDate(ev.event_date)}
                         {ev.start_time ? ` · ${ev.start_time.slice(0, 5)}–${ev.end_time?.slice(0, 5) ?? "?"}` : ""}
                       </div>
-                      <div className="text-xs text-stone-500">
+                      <div className="text-xs text-slate-500">
                         {ev.location_note ?? ev.title} · COI: {COI_STATUS_LABELS[ev.coi_status]}
                         {ev.status === "completed" && ev.revenue != null && (
-                          <span className="ml-1 font-medium text-emerald-700">
+                          <span className="ml-1 font-medium text-status-green">
                             · {fmtMoney(ev.revenue)}
                             {ev.units_sold != null ? ` / ${fmtNumber(ev.units_sold)} bagels` : ""}
                           </span>
@@ -349,7 +369,7 @@ export default function BuildingDetailPage({ params }: { params: Promise<{ id: s
                       </div>
                     </div>
                     <span
-                      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${EVENT_STATUS_COLORS[ev.status]}`}
+                      className={`inline-flex shrink-0 items-center rounded px-2.5 py-0.5 text-xs font-medium ${EVENT_STATUS_COLORS[ev.status]}`}
                     >
                       {EVENT_STATUS_LABELS[ev.status]}
                     </span>
@@ -460,25 +480,50 @@ function ActivityLog({
   const contactName = (cid: string | null) =>
     contacts.find((c) => c.id === cid)?.name ?? null;
 
+  // One-tap outcomes for logging from a phone between stops.
+  const quickLogs: { type: ActivityType; label: string }[] = [
+    { type: "call", label: "No answer" },
+    { type: "call", label: "Left voicemail" },
+    { type: "call", label: "Spoke to contact" },
+    { type: "visit", label: "Visited lobby" },
+    { type: "visit", label: "Left samples" },
+    { type: "visit", label: "Talked to front desk" },
+  ];
+
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-5">
+    <section className="rounded-lg border border-slate-200 bg-white p-5">
       <h2 className="mb-3 font-semibold">Outreach timeline</h2>
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {quickLogs.map((q) => (
+          <button
+            key={q.label}
+            type="button"
+            onClick={() => {
+              setType(q.type);
+              setSummary(q.label);
+            }}
+            className="rounded-full border border-[#d0d4e4] bg-white px-2.5 py-1 text-xs text-slate-600 transition hover:border-primary-400 hover:text-primary-600"
+          >
+            {q.label}
+          </button>
+        ))}
+      </div>
       <form onSubmit={submit} className="mb-4 flex flex-wrap gap-2">
         <select
           value={type}
           onChange={(e) => setType(e.target.value as ActivityType)}
-          className="rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="rounded border border-slate-300 bg-white px-2 py-2 text-sm focus:border-primary-500 focus:outline-none"
         >
           {(["call", "email", "visit", "note"] as ActivityType[]).map((t) => (
             <option key={t} value={t}>
-              {ACTIVITY_TYPE_META[t].icon} {ACTIVITY_TYPE_META[t].label}
+              {ACTIVITY_TYPE_META[t].label}
             </option>
           ))}
         </select>
         <select
           value={contactId}
           onChange={(e) => setContactId(e.target.value)}
-          className="rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="rounded border border-slate-300 bg-white px-2 py-2 text-sm focus:border-primary-500 focus:outline-none"
         >
           <option value="">No specific contact</option>
           {contacts.map((c) => (
@@ -491,35 +536,38 @@ function ActivityLog({
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           placeholder="What happened? e.g. Left voicemail with GM about March pop-up"
-          className="min-w-48 flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="min-w-48 flex-1 rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         />
         <button
           type="submit"
           disabled={busy || !summary.trim()}
-          className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
+          className="rounded bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:opacity-50"
         >
           Log
         </button>
       </form>
 
       {activities.length === 0 ? (
-        <p className="py-4 text-center text-sm text-stone-400">
-          No outreach logged yet — every call, email, and lobby visit goes here.
+        <p className="py-4 text-center text-sm text-slate-400">
+          No outreach logged yet. Every call, email, and lobby visit goes here.
         </p>
       ) : (
-        <ol className="relative space-y-4 border-l border-stone-200 pl-5">
+        <ol className="relative space-y-4 border-l border-slate-200 pl-5">
           {activities.map((a) => (
             <li key={a.id} className="group relative">
-              <span className="absolute -left-[27px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] ring-1 ring-stone-300">
-                {ACTIVITY_TYPE_META[a.type].icon}
+              <span
+                className="absolute -left-[27px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-slate-500 ring-1 ring-slate-300"
+                title={ACTIVITY_TYPE_META[a.type].label}
+              >
+                <Icon name={ACTIVITY_TYPE_META[a.type].icon as IconName} size={10} />
               </span>
-              <div className="text-sm text-stone-800">{a.summary}</div>
-              <div className="text-xs text-stone-400">
+              <div className="text-sm text-slate-800">{a.summary}</div>
+              <div className="text-xs text-slate-400">
                 {fmtDateTime(a.occurred_at)}
                 {contactName(a.contact_id) ? ` · ${contactName(a.contact_id)}` : ""}
                 <button
                   onClick={() => onDelete(a.id)}
-                  className="ml-2 hidden text-rose-400 hover:text-rose-600 group-hover:inline"
+                  className="ml-2 hidden text-slate-400 hover:text-status-red group-hover:inline"
                 >
                   delete
                 </button>
@@ -576,31 +624,31 @@ function TaskSection({
   const today = todayStr();
 
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-5">
+    <section className="rounded-lg border border-slate-200 bg-white p-5">
       <h2 className="mb-3 font-semibold">Tasks</h2>
       <form onSubmit={add} className="mb-4 flex flex-wrap gap-2">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Follow up with the GM about…"
-          className="min-w-48 flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="min-w-48 flex-1 rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         />
         <input
           type="date"
           value={due}
           onChange={(e) => setDue(e.target.value)}
-          className="rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         />
         <button
           type="submit"
           disabled={!title.trim()}
-          className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
+          className="rounded bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:opacity-50"
         >
           Add
         </button>
       </form>
       {tasks.length === 0 ? (
-        <p className="py-2 text-center text-sm text-stone-400">No tasks for this building.</p>
+        <p className="py-2 text-center text-sm text-slate-400">No tasks for this building.</p>
       ) : (
         <ul className="space-y-2">
           {tasks.map((t) => (
@@ -609,15 +657,15 @@ function TaskSection({
                 type="checkbox"
                 checked={t.status === "done"}
                 onChange={() => toggle(t)}
-                className="h-4 w-4 accent-brand-500"
+                className="h-4 w-4 accent-primary-500"
               />
-              <span className={t.status === "done" ? "text-stone-400 line-through" : ""}>
+              <span className={t.status === "done" ? "text-slate-400 line-through" : ""}>
                 {t.title}
               </span>
               {t.due_date && (
                 <span
                   className={`text-xs ${
-                    t.status === "open" && t.due_date < today ? "font-medium text-rose-600" : "text-stone-400"
+                    t.status === "open" && t.due_date < today ? "font-medium text-status-red" : "text-slate-400"
                   }`}
                 >
                   {fmtDate(t.due_date)}
@@ -625,7 +673,7 @@ function TaskSection({
               )}
               <button
                 onClick={() => remove(t)}
-                className="ml-auto hidden text-xs text-rose-400 hover:text-rose-600 group-hover:inline"
+                className="ml-auto hidden text-xs text-slate-400 hover:text-status-red group-hover:inline"
               >
                 delete
               </button>
@@ -712,7 +760,7 @@ function ContactFormModal({
       <form onSubmit={save}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-stone-700">Role</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Role</span>
             <select className={input} value={f.role} onChange={set("role")}>
               {Object.entries(CONTACT_ROLE_LABELS).map(([v, l]) => (
                 <option key={v} value={v}>
@@ -722,42 +770,42 @@ function ContactFormModal({
             </select>
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-stone-700">Name</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Name</span>
             <input className={input} value={f.name} onChange={set("name")} />
           </label>
           <label className="block sm:col-span-2">
-            <span className="mb-1 block text-sm font-medium text-stone-700">Title</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Title</span>
             <input className={input} value={f.title} onChange={set("title")} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-stone-700">Email</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Email</span>
             <input className={input} type="email" value={f.email} onChange={set("email")} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-stone-700">Phone</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Phone</span>
             <input className={input} value={f.phone} onChange={set("phone")} />
           </label>
           <label className="block sm:col-span-2">
-            <span className="mb-1 block text-sm font-medium text-stone-700">LinkedIn URL</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">LinkedIn URL</span>
             <input className={input} value={f.linkedin_url} onChange={set("linkedin_url")} />
           </label>
           <label className="block sm:col-span-2">
-            <span className="mb-1 block text-sm font-medium text-stone-700">Notes</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Notes</span>
             <textarea className={input} rows={2} value={f.notes} onChange={set("notes")} />
           </label>
           <label className="flex items-center gap-2 sm:col-span-2">
             <input type="checkbox" checked={f.is_primary} onChange={set("is_primary")} />
-            <span className="text-sm font-medium text-stone-700">Primary contact</span>
+            <span className="text-sm font-medium text-slate-700">Primary contact</span>
           </label>
         </div>
-        {error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-status-red">{error}</p>}
         <div className="mt-5 flex items-center justify-between">
           {editing ? (
             <button
               type="button"
               onClick={remove}
               disabled={busy}
-              className="text-sm font-medium text-rose-600 hover:underline"
+              className="text-sm font-medium text-status-red hover:underline"
             >
               Delete contact
             </button>
@@ -768,14 +816,14 @@ function ContactFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium transition hover:bg-stone-50"
+              className="rounded border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={busy}
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
+              className="rounded bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:opacity-50"
             >
               {busy ? "Saving…" : "Save"}
             </button>

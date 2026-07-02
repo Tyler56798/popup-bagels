@@ -159,34 +159,34 @@ function BuildingsContent() {
   if (!buildings) return <Spinner />;
 
   const select =
-    "rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm focus:border-brand-500 focus:outline-none";
+    "rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <div>
       <PageHeader title="Buildings" sub={`${filtered.length} of ${buildings.length} shown`}>
         <button
           onClick={() => fileRef.current?.click()}
-          className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium transition hover:bg-stone-50"
+          className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium transition hover:bg-slate-50"
         >
           Import CSV
         </button>
         <input ref={fileRef} type="file" accept=".csv" hidden onChange={importCsv} />
         <button
           onClick={exportCsv}
-          className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium transition hover:bg-stone-50"
+          className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium transition hover:bg-slate-50"
         >
           Export CSV
         </button>
         <button
           onClick={() => setShowAdd(true)}
-          className="rounded-lg bg-brand-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
+          className="rounded bg-primary-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary-600"
         >
           + Add building
         </button>
       </PageHeader>
 
       {importMsg && (
-        <p className="mb-4 rounded-lg bg-brand-50 px-4 py-2 text-sm text-brand-800 ring-1 ring-brand-200">
+        <p className="mb-4 rounded bg-primary-50 px-4 py-2 text-sm text-primary-800 ring-1 ring-primary-200">
           {importMsg}
         </p>
       )}
@@ -198,7 +198,7 @@ function BuildingsContent() {
           placeholder="Search name or address…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-64 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+          className="w-64 rounded border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-primary-500 focus:outline-none"
         />
         <select
           className={select}
@@ -237,7 +237,7 @@ function BuildingsContent() {
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-1.5 text-sm text-stone-600">
+        <label className="flex items-center gap-1.5 text-sm text-slate-600">
           <input type="checkbox" checked={magMile} onChange={(e) => setMagMile(e.target.checked)} />
           Mag Mile
         </label>
@@ -252,9 +252,9 @@ function BuildingsContent() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-stone-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead className="bg-chrome text-left text-xs font-medium text-[#676879]">
             <tr>
               <th className="px-4 py-3 font-medium">Building</th>
               <th className="px-4 py-3 font-medium">Submarket</th>
@@ -265,16 +265,16 @@ function BuildingsContent() {
               <th className="px-4 py-3 font-medium">Stage</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-100">
+          <tbody className="divide-y divide-slate-100">
             {filtered.map((b) => (
-              <tr key={b.id} className="transition hover:bg-brand-50/40">
+              <tr key={b.id} className="transition hover:bg-chrome">
                 <td className="px-4 py-3">
                   <BuildingLink id={b.id} name={b.name} />
-                  <div className="text-xs text-stone-500">{b.street_address}</div>
+                  <div className="text-xs text-slate-500">{b.street_address}</div>
                 </td>
-                <td className="px-4 py-3 text-stone-600">{b.submarket ?? "—"}</td>
-                <td className="px-4 py-3 text-stone-600">{b.class_rating ?? "—"}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-stone-600">
+                <td className="px-4 py-3 text-slate-600">{b.submarket ?? "—"}</td>
+                <td className="px-4 py-3 text-slate-600">{b.class_rating ?? "—"}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-slate-600">
                   {fmtNumber(b.est_daytime_pop)}
                 </td>
                 <td className="px-4 py-3">
@@ -291,7 +291,7 @@ function BuildingsContent() {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <p className="py-12 text-center text-sm text-stone-400">
+          <p className="py-12 text-center text-sm text-slate-400">
             No buildings match these filters.
           </p>
         )}

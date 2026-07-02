@@ -119,21 +119,21 @@ export default function AnalyticsPage() {
       <PageHeader title="Analytics" sub="How the pipeline converts and which buildings perform." />
 
       {/* Funnel */}
-      <section className="rounded-xl border border-stone-200 bg-white p-5">
+      <section className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="mb-4 font-semibold">Pipeline funnel</h2>
         <div className="space-y-3">
           {funnel.map((f, i) => (
             <div key={f.label} className="flex items-center gap-3">
-              <div className="w-32 text-sm text-stone-600">{f.label}</div>
-              <div className="h-7 flex-1 rounded-lg bg-stone-100">
+              <div className="w-32 text-sm text-slate-600">{f.label}</div>
+              <div className="h-7 flex-1 rounded bg-slate-100">
                 <div
-                  className="flex h-7 items-center rounded-lg bg-brand-500 px-2 text-xs font-semibold text-white"
+                  className="flex h-7 items-center rounded bg-primary-500 px-2 text-xs font-semibold text-white"
                   style={{ width: `${Math.max((f.n / maxFunnel) * 100, 6)}%` }}
                 >
                   {f.n}
                 </div>
               </div>
-              <div className="w-20 text-right text-xs text-stone-500">
+              <div className="w-20 text-right text-xs text-slate-500">
                 {i > 0 && funnel[i - 1].n > 0
                   ? `${Math.round((f.n / funnel[i - 1].n) * 100)}% of prev`
                   : ""}
@@ -152,29 +152,29 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Time in stage */}
-      <section className="mt-6 rounded-xl border border-stone-200 bg-white p-5">
+      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="mb-1 font-semibold">Average time in stage</h2>
-        <p className="mb-4 text-xs text-stone-500">
-          From stage-change history — builds up as the team works the pipeline.
+        <p className="mb-4 text-xs text-slate-500">
+          From stage-change history. Builds up as the team works the pipeline.
         </p>
         {timeInStage.length === 0 ? (
-          <p className="py-4 text-center text-sm text-stone-400">
+          <p className="py-4 text-center text-sm text-slate-400">
             Not enough stage history yet. Move buildings through the pipeline and this fills in.
           </p>
         ) : (
           <div className="space-y-2">
             {timeInStage.map(({ stage, avg }) => (
               <div key={stage} className="flex items-center gap-3">
-                <div className="w-32 text-sm text-stone-600">{STAGE_LABELS[stage]}</div>
-                <div className="h-5 flex-1 rounded bg-stone-100">
+                <div className="w-32 text-sm text-slate-600">{STAGE_LABELS[stage]}</div>
+                <div className="h-5 flex-1 rounded bg-slate-100">
                   <div
-                    className="h-5 rounded bg-violet-400"
+                    className="h-5 rounded bg-status-purple"
                     style={{
                       width: `${Math.min((avg / Math.max(...timeInStage.map((t) => t.avg))) * 100, 100)}%`,
                     }}
                   />
                 </div>
-                <div className="w-16 text-right text-sm tabular-nums text-stone-600">
+                <div className="w-16 text-right text-sm tabular-nums text-slate-600">
                   {avg.toFixed(1)}d
                 </div>
               </div>
@@ -184,26 +184,26 @@ export default function AnalyticsPage() {
       </section>
 
       {/* Event results */}
-      <section className="mt-6 rounded-xl border border-stone-200 bg-white p-5">
+      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="mb-4 font-semibold">Pop-up results</h2>
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-lg bg-stone-50 p-4 text-center">
+          <div className="rounded bg-slate-50 p-4 text-center">
             <div className="text-2xl font-semibold tabular-nums">{events.length}</div>
-            <div className="text-xs text-stone-500">completed pop-ups</div>
+            <div className="text-xs text-slate-500">completed pop-ups</div>
           </div>
-          <div className="rounded-lg bg-stone-50 p-4 text-center">
+          <div className="rounded bg-slate-50 p-4 text-center">
             <div className="text-2xl font-semibold tabular-nums">{fmtMoney(totalRevenue)}</div>
-            <div className="text-xs text-stone-500">total revenue</div>
+            <div className="text-xs text-slate-500">total revenue</div>
           </div>
-          <div className="rounded-lg bg-stone-50 p-4 text-center">
+          <div className="rounded bg-slate-50 p-4 text-center">
             <div className="text-2xl font-semibold tabular-nums">{fmtNumber(totalUnits)}</div>
-            <div className="text-xs text-stone-500">bagels sold</div>
+            <div className="text-xs text-slate-500">bagels sold</div>
           </div>
         </div>
         {topEvents.length > 0 && (
           <div className="mt-4">
-            <h3 className="mb-2 text-sm font-medium text-stone-600">Top buildings by revenue</h3>
-            <ul className="divide-y divide-stone-100 text-sm">
+            <h3 className="mb-2 text-sm font-medium text-slate-600">Top buildings by revenue</h3>
+            <ul className="divide-y divide-slate-100 text-sm">
               {topEvents.map((e) => (
                 <li key={e.id} className="flex justify-between py-2">
                   <span>{e.buildings?.name ?? e.title}</span>
@@ -214,8 +214,8 @@ export default function AnalyticsPage() {
           </div>
         )}
         {events.length === 0 && (
-          <p className="mt-4 text-center text-sm text-stone-400">
-            Mark events as completed (with revenue) and results appear here — that&apos;s how you
+          <p className="mt-4 text-center text-sm text-slate-400">
+            Mark events as completed (with revenue) and results appear here. That&apos;s how you
             learn which buildings are worth repeating.
           </p>
         )}
@@ -234,25 +234,25 @@ function RateCard({
   note?: string;
 }) {
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-5">
+    <section className="rounded-lg border border-slate-200 bg-white p-5">
       <h2 className="font-semibold">{title}</h2>
-      {note && <p className="mt-0.5 text-xs text-stone-500">{note}</p>}
+      {note && <p className="mt-0.5 text-xs text-slate-500">{note}</p>}
       {rows.length === 0 ? (
-        <p className="py-4 text-center text-sm text-stone-400">No data.</p>
+        <p className="py-4 text-center text-sm text-slate-400">No data.</p>
       ) : (
         <div className="mt-3 space-y-2">
           {rows.slice(0, 8).map((r) => (
             <div key={r.label} className="flex items-center gap-3">
-              <div className="w-28 truncate text-sm text-stone-600" title={r.label}>
+              <div className="w-28 truncate text-sm text-slate-600" title={r.label}>
                 {r.label}
               </div>
-              <div className="h-4 flex-1 rounded bg-stone-100">
+              <div className="h-4 flex-1 rounded bg-slate-100">
                 <div
-                  className="h-4 rounded bg-emerald-400"
+                  className="h-4 rounded bg-status-green"
                   style={{ width: `${Math.round(r.rate * 100)}%` }}
                 />
               </div>
-              <div className="w-24 text-right text-xs tabular-nums text-stone-500">
+              <div className="w-24 text-right text-xs tabular-nums text-slate-500">
                 {r.booked}/{r.total} · {Math.round(r.rate * 100)}%
               </div>
             </div>

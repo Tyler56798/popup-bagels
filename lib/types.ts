@@ -21,12 +21,13 @@ export const STAGE_LABELS: Record<Stage, string> = {
   declined: "Declined",
 };
 
+/** monday-style solid label fills; every stage color carries white text. */
 export const STAGE_COLORS: Record<Stage, string> = {
-  not_contacted: "bg-zinc-100 text-zinc-600 ring-zinc-200",
-  reached_out: "bg-sky-50 text-sky-700 ring-sky-200",
-  followed_up: "bg-violet-50 text-violet-700 ring-violet-200",
-  booked: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  declined: "bg-rose-50 text-rose-600 ring-rose-200",
+  not_contacted: "bg-status-gray text-white",
+  reached_out: "bg-status-blue text-white",
+  followed_up: "bg-status-purple text-white",
+  booked: "bg-status-green text-white",
+  declined: "bg-status-red text-white",
 };
 
 export type Viability = "strong" | "acceptable" | "weak" | "not_viable";
@@ -39,10 +40,10 @@ export const VIABILITY_LABELS: Record<Viability, string> = {
 };
 
 export const VIABILITY_COLORS: Record<Viability, string> = {
-  strong: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  acceptable: "bg-amber-50 text-amber-700 ring-amber-200",
-  weak: "bg-orange-50 text-orange-600 ring-orange-200",
-  not_viable: "bg-rose-50 text-rose-600 ring-rose-200",
+  strong: "bg-status-green text-white",
+  acceptable: "bg-status-orange text-white",
+  weak: "bg-status-red text-white",
+  not_viable: "bg-status-gray text-white",
 };
 
 export type ContactRole =
@@ -67,11 +68,11 @@ export const CONTACT_ROLE_LABELS: Record<ContactRole, string> = {
 export type ActivityType = "call" | "email" | "visit" | "note" | "stage_change";
 
 export const ACTIVITY_TYPE_META: Record<ActivityType, { label: string; icon: string }> = {
-  call: { label: "Call", icon: "📞" },
-  email: { label: "Email", icon: "✉️" },
-  visit: { label: "Visit", icon: "🚶" },
-  note: { label: "Note", icon: "📝" },
-  stage_change: { label: "Stage change", icon: "🔀" },
+  call: { label: "Call", icon: "phone" },
+  email: { label: "Email", icon: "mail" },
+  visit: { label: "Visit", icon: "walk" },
+  note: { label: "Note", icon: "note" },
+  stage_change: { label: "Stage change", icon: "shuffle" },
 };
 
 export type EventStatus = "tentative" | "confirmed" | "completed" | "cancelled";
@@ -85,10 +86,10 @@ export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
 };
 
 export const EVENT_STATUS_COLORS: Record<EventStatus, string> = {
-  tentative: "bg-amber-50 text-amber-700 ring-amber-200",
-  confirmed: "bg-sky-50 text-sky-700 ring-sky-200",
-  completed: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  cancelled: "bg-zinc-100 text-zinc-500 ring-zinc-200",
+  tentative: "bg-status-orange text-white",
+  confirmed: "bg-status-blue text-white",
+  completed: "bg-status-green text-white",
+  cancelled: "bg-status-gray text-white",
 };
 
 export const COI_STATUS_LABELS: Record<CoiStatus, string> = {

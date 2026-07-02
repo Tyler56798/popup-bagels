@@ -43,6 +43,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except static assets and Next internals.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)$).*)"],
+  // Everything except static assets, Next internals, and the PWA manifest
+  // (fetched by the browser without auth cookies during install).
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)$).*)",
+  ],
 };

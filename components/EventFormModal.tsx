@@ -101,8 +101,8 @@ export default function EventFormModal({
   }
 
   const input =
-    "w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none";
-  const label = "mb-1 block text-sm font-medium text-stone-700";
+    "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
+  const label = "mb-1 block text-sm font-medium text-slate-700";
   const showResults = f.status === "completed";
 
   return (
@@ -201,7 +201,7 @@ export default function EventFormModal({
           )}
         </div>
 
-        {error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-status-red">{error}</p>}
 
         <div className="mt-5 flex items-center justify-between">
           {editing && onDeleted ? (
@@ -209,7 +209,7 @@ export default function EventFormModal({
               type="button"
               onClick={remove}
               disabled={busy}
-              className="text-sm font-medium text-rose-600 hover:underline"
+              className="text-sm font-medium text-status-red hover:underline"
             >
               Delete event
             </button>
@@ -220,14 +220,14 @@ export default function EventFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium transition hover:bg-stone-50"
+              className="rounded border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={busy}
-              className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
+              className="rounded bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:opacity-50"
             >
               {busy ? "Saving…" : "Save"}
             </button>

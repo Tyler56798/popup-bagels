@@ -103,8 +103,8 @@ export default function BuildingFormModal({ building, onClose, onSaved }: Props)
   }
 
   const input =
-    "w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none";
-  const label = "mb-1 block text-sm font-medium text-stone-700";
+    "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
+  const label = "mb-1 block text-sm font-medium text-slate-700";
 
   return (
     <Modal title={editing ? `Edit ${building!.name}` : "Add building"} onClose={onClose} wide>
@@ -113,13 +113,13 @@ export default function BuildingFormModal({ building, onClose, onSaved }: Props)
           <label className="block sm:col-span-2">
             <span className={label}>Building name *</span>
             <input className={input} value={f.name} onChange={set("name")} />
-            {errors.name && <em className="text-xs text-rose-600">{errors.name}</em>}
+            {errors.name && <em className="text-xs text-status-red">{errors.name}</em>}
           </label>
           <label className="block">
             <span className={label}>Street address *</span>
             <input className={input} value={f.street_address} onChange={set("street_address")} />
             {errors.street_address && (
-              <em className="text-xs text-rose-600">{errors.street_address}</em>
+              <em className="text-xs text-status-red">{errors.street_address}</em>
             )}
           </label>
           <label className="block">
@@ -137,7 +137,7 @@ export default function BuildingFormModal({ building, onClose, onSaved }: Props)
           <label className="block">
             <span className={label}>Floors</span>
             <input className={input} value={f.num_floors} onChange={set("num_floors")} inputMode="numeric" />
-            {errors.num_floors && <em className="text-xs text-rose-600">{errors.num_floors}</em>}
+            {errors.num_floors && <em className="text-xs text-status-red">{errors.num_floors}</em>}
           </label>
           <label className="block">
             <span className={label}>Est. daytime population</span>
@@ -168,7 +168,7 @@ export default function BuildingFormModal({ building, onClose, onSaved }: Props)
           <label className="block">
             <span className={label}>Lead score (0–5)</span>
             <input className={input} value={f.lead_score} onChange={set("lead_score")} inputMode="numeric" />
-            {errors.lead_score && <em className="text-xs text-rose-600">{errors.lead_score}</em>}
+            {errors.lead_score && <em className="text-xs text-status-red">{errors.lead_score}</em>}
           </label>
           <label className="block">
             <span className={label}>Outreach wave</span>
@@ -194,7 +194,7 @@ export default function BuildingFormModal({ building, onClose, onSaved }: Props)
           </label>
           <label className="flex items-center gap-2 sm:col-span-2">
             <input type="checkbox" checked={f.mag_mile} onChange={set("mag_mile")} />
-            <span className="text-sm font-medium text-stone-700">Magnificent Mile cohort</span>
+            <span className="text-sm font-medium text-slate-700">Magnificent Mile cohort</span>
           </label>
           <label className="block sm:col-span-2">
             <span className={label}>Notes</span>
@@ -202,20 +202,20 @@ export default function BuildingFormModal({ building, onClose, onSaved }: Props)
           </label>
         </div>
 
-        {apiError && <p className="mt-3 text-sm text-rose-600">{apiError}</p>}
+        {apiError && <p className="mt-3 text-sm text-status-red">{apiError}</p>}
 
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium transition hover:bg-stone-50"
+            className="rounded border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={busy}
-            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
+            className="rounded bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:opacity-50"
           >
             {busy ? "Saving…" : editing ? "Save changes" : "Add building"}
           </button>

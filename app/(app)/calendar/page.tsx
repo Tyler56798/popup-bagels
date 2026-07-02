@@ -8,6 +8,7 @@ import {
 } from "@/lib/types";
 import { todayStr } from "@/lib/format";
 import { PageHeader, Spinner } from "@/components/ui";
+import { Icon } from "@/components/icons";
 import EventFormModal from "@/components/EventFormModal";
 
 type EventRow = PopupEvent & { buildings: { name: string } | null };
@@ -86,14 +87,22 @@ export default function CalendarPage() {
 
   return (
     <div>
-      <PageHeader title="Calendar" sub="Scheduled pop-ups — click a day to add one.">
-        <div className="flex items-center gap-1 rounded-lg border border-stone-300 bg-white">
-          <button onClick={() => move(-1)} className="px-3 py-2 text-sm hover:bg-stone-50">
-            ←
+      <PageHeader title="Calendar" sub="Scheduled pop-ups. Click a day to add one.">
+        <div className="flex items-center gap-1 rounded border border-[#d0d4e4] bg-white">
+          <button
+            onClick={() => move(-1)}
+            aria-label="Previous month"
+            className="px-2.5 py-2 text-[#676879] hover:bg-chrome"
+          >
+            <Icon name="chevron-left" size={16} />
           </button>
           <span className="w-40 text-center text-sm font-semibold">{monthName}</span>
-          <button onClick={() => move(1)} className="px-3 py-2 text-sm hover:bg-stone-50">
-            →
+          <button
+            onClick={() => move(1)}
+            aria-label="Next month"
+            className="px-2.5 py-2 text-[#676879] hover:bg-chrome"
+          >
+            <Icon name="chevron-right" size={16} />
           </button>
         </div>
         <button
@@ -101,14 +110,14 @@ export default function CalendarPage() {
             setYear(now.getFullYear());
             setMonth(now.getMonth());
           }}
-          className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium hover:bg-stone-50"
+          className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50"
         >
           Today
         </button>
       </PageHeader>
 
-      <div className="overflow-hidden rounded-xl border border-stone-200 bg-white">
-        <div className="grid grid-cols-7 border-b border-stone-100 bg-stone-50 text-center text-xs font-medium uppercase tracking-wide text-stone-500">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50 text-center text-xs font-medium uppercase tracking-wide text-slate-500">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
             <div key={d} className="py-2">
               {d}
@@ -122,13 +131,13 @@ export default function CalendarPage() {
               <div
                 key={str}
                 onClick={() => setModal({ date: str })}
-                className={`min-h-24 cursor-pointer border-b border-r border-stone-100 p-1.5 transition hover:bg-brand-50/50 ${
-                  inMonth ? "bg-white" : "bg-stone-50/60 text-stone-400"
+                className={`min-h-16 cursor-pointer border-b border-r border-slate-100 p-1.5 transition hover:bg-primary-50/50 sm:min-h-24 ${
+                  inMonth ? "bg-white" : "bg-slate-50/60 text-slate-400"
                 }`}
               >
                 <div
                   className={`mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-                    str === today ? "bg-brand-500 font-bold text-white" : ""
+                    str === today ? "bg-primary-500 font-bold text-white" : ""
                   }`}
                 >
                   {day}
@@ -141,7 +150,7 @@ export default function CalendarPage() {
                         e.stopPropagation();
                         setModal({ event: ev });
                       }}
-                      className={`block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] font-medium ring-1 ${EVENT_STATUS_COLORS[ev.status]}`}
+                      className={`block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] font-medium ${EVENT_STATUS_COLORS[ev.status]}`}
                       title={`${ev.buildings?.name ?? ev.title}${ev.start_time ? ` · ${ev.start_time.slice(0, 5)}` : ""}`}
                     >
                       {ev.start_time ? `${ev.start_time.slice(0, 5)} ` : ""}
