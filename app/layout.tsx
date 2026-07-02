@@ -22,6 +22,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // Exporting a custom viewport replaces Next's defaults entirely, so
+  // width/initialScale must be restated or iOS falls back to a 980px
+  // legacy viewport and zooms pages to their content width.
+  width: "device-width",
+  initialScale: 1,
   // Matches the chrome gray so the iOS/Android status bar blends with the app.
   themeColor: "#f6f7fb",
   viewportFit: "cover",

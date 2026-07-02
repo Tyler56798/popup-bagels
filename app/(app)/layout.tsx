@@ -95,7 +95,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 pb-24 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:p-8">
+          {children}
+        </main>
       </div>
 
       {/* Mobile bottom tab bar */}
