@@ -1,22 +1,3 @@
 # Private data — real personal emails/phones. Never commit.
 data-private.js
-legacy/data-private.js
 data/Phase_1C_Contacts_Signals_Scoring.csv
-
-# Next.js / Node
-node_modules/
-.next/
-out/
-next-env.d.ts
-*.tsbuildinfo
-
-# Env — Supabase keys live here. Never commit.
-.env
-.env.local
-.env*.local
-
-# Vercel
-.vercel
-
-.vercel
-.env*
